@@ -2,6 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 const imageExtensions = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
+const viewFitPadding = 4;
 
 const state = {
   items: [],
@@ -310,7 +311,7 @@ function renderThumbs() {
 function resetView() {
   const stage = els.dropZone.getBoundingClientRect();
   const size = rotatedSize();
-  const viewPadding = state.mode === "view" ? 18 : 0;
+  const viewPadding = state.mode === "view" ? viewFitPadding : 0;
   const fitWidth = Math.max(1, stage.width - viewPadding * 2) / size.width;
   const fitHeight = Math.max(1, stage.height - viewPadding * 2) / size.height;
   state.fitZoom = state.mode === "view"
@@ -321,6 +322,10 @@ function resetView() {
   state.panY = 0;
   updateZoomLabel();
   draw();
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function rotatedSize() {
@@ -354,6 +359,18 @@ function imageTransform() {
   };
 }
 
+function constrainViewPan() {
+  if (state.mode !== "view" || !state.image) return;
+  const rect = els.dropZone.getBoundingClientRect();
+  const size = rotatedSize();
+  const width = size.width * state.zoom;
+  const height = size.height * state.zoom;
+  const maxX = Math.max(0, (width - rect.width) / 2);
+  const maxY = Math.max(0, (height - rect.height) / 2);
+  state.panX = maxX ? clamp(state.panX, -maxX, maxX) : 0;
+  state.panY = maxY ? clamp(state.panY, -maxY, maxY) : 0;
+}
+
 function draw() {
   const rect = els.dropZone.getBoundingClientRect();
   ctx.clearRect(0, 0, rect.width, rect.height);
@@ -375,19 +392,17 @@ function updateZoomLabel() {
 
 function zoomBy(factor, clientX, clientY) {
   if (!state.image) return;
-  if (state.mode === "view") {
-    resetView();
-    return;
-  }
   const rect = els.canvas.getBoundingClientRect();
   const x = clientX ?? rect.left + rect.width / 2;
   const y = clientY ?? rect.top + rect.height / 2;
   const before = { x: x - rect.left - rect.width / 2 - state.panX, y: y - rect.top - rect.height / 2 - state.panY };
-  const next = Math.min(8, Math.max(0.05, state.zoom * factor));
+  const minZoom = state.mode === "view" ? state.fitZoom || 0.05 : 0.05;
+  const next = Math.min(8, Math.max(minZoom, state.zoom * factor));
   const ratio = next / state.zoom;
   state.panX -= before.x * (ratio - 1);
   state.panY -= before.y * (ratio - 1);
   state.zoom = next;
+  constrainViewPan();
   updateZoomLabel();
   draw();
 }
@@ -748,7 +763,7 @@ function setupCanvasPan() {
     }
   });
   els.canvas.addEventListener("pointerdown", (event) => {
-    if (!state.image || state.cropMode || state.mode === "view") return;
+    if (!state.image || state.cropMode) return;
     state.draggingCanvas = true;
     state.dragStart = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY };
     els.canvas.setPointerCapture(event.pointerId);
@@ -757,6 +772,7 @@ function setupCanvasPan() {
     if (!state.draggingCanvas || !state.dragStart) return;
     state.panX = state.dragStart.panX + event.clientX - state.dragStart.x;
     state.panY = state.dragStart.panY + event.clientY - state.dragStart.y;
+    constrainViewPan();
     draw();
   });
   els.canvas.addEventListener("pointerup", () => {
