@@ -1,4 +1,4 @@
-const CACHE_NAME = "photo-manager-v5";
+const CACHE_NAME = "photo-manager-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,6 +25,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  if (url.pathname.endsWith("/launch-data.json") || url.pathname.endsWith("/local-image")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) =>
       cached || fetch(event.request).then((response) => {
