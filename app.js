@@ -1430,7 +1430,20 @@ async function loadWindowsLaunchData() {
 function registerServiceWorker() {
   updateInstallUi();
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker
+      .register("./service-worker.js", { updateViaCache: "none" })
+      .then((registration) => registration.update())
+      .catch((error) => {
+        console.error("Service worker registration failed", error);
+        setStatus("לא ניתן לבדוק עדכון לאפליקציה");
+      });
   }
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
