@@ -1,3 +1,3 @@
 "use strict";
 
-globalThis.EASYIMAGE_VERSION = "1.1.0";
+globalThis.EASYIMAGE_VERSION = "1.1.1";
