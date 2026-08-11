@@ -1447,7 +1447,6 @@ function registerServiceWorker() {
       });
   }
   window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
     state.deferredInstall = event;
     updateInstallUi();
     setStatus("האפליקציה מוכנה להתקנה");
