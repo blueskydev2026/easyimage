@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 const imageExtensions = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const viewFitPadding = 4;
+const appVersion = globalThis.EASYIMAGE_VERSION || "לא ידועה";
 
 const state = {
   items: [],
@@ -27,6 +28,7 @@ const state = {
 };
 
 const els = {
+  versionLabel: $("versionLabel"),
   openFolderBtn: $("openFolderBtn"),
   filePicker: $("filePicker"),
   installBtn: $("installBtn"),
@@ -67,6 +69,8 @@ const els = {
   printPreviewPage: $("printPreviewPage"),
   printPreviewLabel: $("printPreviewLabel")
 };
+
+els.versionLabel.textContent = `גרסה ${appVersion}`;
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
 
