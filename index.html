@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111827" />
+    <title>ניהול תמונות</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">▣</div>
+          <div>
+            <h1>ניהול תמונות</h1>
+            <p id="folderLabel">בחרו תיקייה או גררו תמונות לחלון</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="openFolderBtn" class="primary">פתיחת תיקייה</button>
+          <label class="button secondary" for="filePicker">בחירת תמונות</label>
+          <input id="filePicker" type="file" accept="image/*" multiple hidden />
+          <button id="installBtn" class="secondary" hidden>התקנה</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <div class="panel-title">
+            <span>תמונות</span>
+            <span id="countLabel">0</span>
+          </div>
+          <div class="sort-row">
+            <button id="sortNameBtn" title="מיון לפי שם">שם</button>
+            <button id="sortDateBtn" title="מיון לפי תאריך">תאריך</button>
+            <button id="sortTimeBtn" title="מיון לפי שעה">שעה</button>
+          </div>
+          <div id="thumbList" class="thumb-list" aria-label="רשימת תמונות"></div>
+        </aside>
+
+        <section class="viewer-region">
+          <div class="toolbar" role="toolbar" aria-label="כלי תמונה">
+            <button id="prevBtn" title="תמונה קודמת">‹</button>
+            <button id="nextBtn" title="תמונה הבאה">›</button>
+            <span class="divider"></span>
+            <button id="zoomOutBtn" title="הקטנה">−</button>
+            <button id="fitBtn" title="התאמה למסך">התאם</button>
+            <button id="zoomInBtn" title="הגדלה">+</button>
+            <span id="zoomLabel" class="metric">100%</span>
+            <span class="divider"></span>
+            <button id="rotateLeftBtn" title="סיבוב שמאלה">↺</button>
+            <button id="rotateRightBtn" title="סיבוב ימינה">↻</button>
+            <button id="cropBtn" title="חיתוך">חיתוך</button>
+            <button id="copyImageBtn" title="העתקת תמונה">העתק</button>
+            <button id="saveBtn" class="accent" title="שמירה">שמור</button>
+            <span class="divider"></span>
+            <button id="deleteBtn" class="danger" title="מחיקה">מחק</button>
+          </div>
+
+          <div id="dropZone" class="canvas-stage">
+            <div id="emptyState" class="empty-state">
+              <strong>גררו תמונות לכאן</strong>
+              <span>או פתחו תיקייה כדי לדפדף במהירות עם החיצים, גלגלת העכבר לזום ו־Delete למחיקה.</span>
+            </div>
+            <canvas id="imageCanvas"></canvas>
+            <div id="cropOverlay" class="crop-overlay" hidden>
+              <div id="cropBox" class="crop-box">
+                <span class="handle nw"></span>
+                <span class="handle ne"></span>
+                <span class="handle sw"></span>
+                <span class="handle se"></span>
+              </div>
+            </div>
+          </div>
+
+          <footer class="statusbar">
+            <span id="fileLabel">אין תמונה פתוחה</span>
+            <span id="metaLabel"></span>
+            <span id="statusLabel">מוכן</span>
+          </footer>
+        </section>
+
+        <aside class="inspector">
+          <section class="tool-panel">
+            <h2>שם קובץ</h2>
+            <div class="rename-row">
+              <input id="renameInput" type="text" autocomplete="off" spellcheck="false" />
+              <button id="renameBtn">שנה</button>
+            </div>
+          </section>
+
+          <section class="tool-panel">
+            <h2>חיתוך</h2>
+            <div class="grid2">
+              <button id="applyCropBtn">החל חיתוך</button>
+              <button id="cancelCropBtn">בטל</button>
+            </div>
+            <button id="copyCropBtn" class="wide">העתקת החלק המסומן</button>
+          </section>
+
+          <section class="tool-panel">
+            <h2>שינוי שם קבוצתי</h2>
+            <label>
+              תבנית
+              <input id="batchPattern" type="text" value="תמונה-{date}-{num}" />
+            </label>
+            <label>
+              התחלת מספור
+              <input id="batchStart" type="number" min="1" value="1" />
+            </label>
+            <label>
+              מיון
+              <select id="batchSort">
+                <option value="date">לפי תאריך</option>
+                <option value="time">לפי שעה</option>
+                <option value="name">לפי שם</option>
+              </select>
+            </label>
+            <button id="batchRenameBtn" class="wide">שנה שמות לכל התמונות</button>
+          </section>
+
+          <section class="tool-panel compact">
+            <h2>קיצורים</h2>
+            <p>חיצים: מעבר | גלגלת: זום | Ctrl+C: העתקה | Ctrl+S: שמירה | Delete: מחיקה | F: התאמה</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
