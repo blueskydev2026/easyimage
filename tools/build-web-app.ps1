@@ -13,7 +13,6 @@ $files = @(
   "index.html",
   "styles.css",
   "app.js",
-  "manifest.json",
   "manifest.webmanifest",
   "service-worker.js"
 )

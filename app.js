@@ -269,7 +269,7 @@ function replaceItems(items, label, selectedIndex = 0) {
   updatePrintSelectionLabel();
   updateModeClasses();
   renderThumbs();
-  if (items.length) selectImage(0);
+  if (items.length) selectImage(nextIndex);
   else clearViewer();
 }
 
