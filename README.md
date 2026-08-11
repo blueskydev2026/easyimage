@@ -1,0 +1,21 @@
+# ניהול תמונות
+
+אפליקציית ווב מקומית לצפייה וניהול תמונות, עם PWA להתקנה ו-file handlers בדפדפני Chrome/Edge תומכים.
+
+## התקנה כמו daily-pdf-reader
+
+כדי שהדפדפן יציע התקנה באופן טבעי, האפליקציה צריכה להיפתח מכתובת HTTPS, למשל GitHub Pages:
+
+```text
+https://blueskydev2026.github.io/easyimage/
+```
+
+הריפו כולל workflow בשם `Deploy PWA` שמפרסם את `dist/web-app` ל-GitHub Pages.
+
+אחרי שהאתר פורסם:
+
+1. פותחים את כתובת GitHub Pages ב-Chrome או Edge.
+2. הדפדפן אמור להציג אפשרות התקנה בשורת הכתובת או דרך תפריט הדפדפן.
+3. אחרי ההתקנה אפשר לבחור את האפליקציה ידנית ב-Windows תחת Settings > Apps > Default apps.
+
+פתיחה ישירה של `index.html` מכונן מקומי אינה מאפשרת התקנת PWA אמיתית.

@@ -18,13 +18,23 @@ const state = {
   crop: null,
   draggingCanvas: false,
   dragStart: null,
-  deferredInstall: null
+  deferredInstall: null,
+  mode: "view",
+  chromePinned: false,
+  chromeHideTimer: null
 };
 
 const els = {
   openFolderBtn: $("openFolderBtn"),
   filePicker: $("filePicker"),
+  viewModeBtn: $("viewModeBtn"),
+  editModeBtn: $("editModeBtn"),
+  toolbarPinBtn: $("toolbarPinBtn"),
   installBtn: $("installBtn"),
+  windowsInstallBtn: $("windowsInstallBtn"),
+  dialogInstallBtn: $("dialogInstallBtn"),
+  installHelpDialog: $("installHelpDialog"),
+  installSupportStatus: $("installSupportStatus"),
   folderLabel: $("folderLabel"),
   countLabel: $("countLabel"),
   thumbList: $("thumbList"),
@@ -50,8 +60,99 @@ function setStatus(text) {
   els.statusLabel.textContent = text;
 }
 
+function isStandaloneApp() {
+  return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+}
+
+function updateInstallUi() {
+  if (!els.installBtn) return;
+  const canInstall = Boolean(state.deferredInstall);
+  els.installBtn.hidden = !canInstall;
+  if (els.dialogInstallBtn) {
+    els.dialogInstallBtn.disabled = !canInstall;
+    els.dialogInstallBtn.textContent = canInstall ? "התקן כאפליקציה" : "הדפדפן לא מציע התקנה כרגע";
+  }
+}
+
+function updateInstallSupportStatus() {
+  if (!els.installSupportStatus) return;
+  const protocol = window.location.protocol;
+  const canUsePwa = protocol === "https:" || protocol === "http:";
+  if (isStandaloneApp()) {
+    els.installSupportStatus.textContent = "האפליקציה כבר פתוחה במצב מותקן. את ברירת המחדל בוחרים ידנית בהגדרות Windows.";
+  } else if (state.deferredInstall) {
+    els.installSupportStatus.textContent = "הדפדפן מוכן להתקנה. לחצו על \"התקן כאפליקציה\".";
+  } else if (!canUsePwa) {
+    els.installSupportStatus.textContent = "פתיחה ישירה מקובץ אינה מאפשרת התקנת PWA. פתחו דרך שרת מקומי או HTTPS.";
+  } else {
+    els.installSupportStatus.textContent = "אם Chrome/Edge לא מציעים התקנה, ודאו שהדף נטען משרת, רעננו, או השתמשו בתפריט הדפדפן.";
+  }
+}
+
+function showInstallHelp() {
+  updateInstallSupportStatus();
+  updateInstallUi();
+  if (els.installHelpDialog && !els.installHelpDialog.open) {
+    els.installHelpDialog.showModal();
+  }
+}
+
+async function installOrShowHelp() {
+  if (!state.deferredInstall) {
+    showInstallHelp();
+    setStatus("נפתח הסבר התקנה וברירת מחדל");
+    return;
+  }
+
+  const promptEvent = state.deferredInstall;
+  state.deferredInstall = null;
+  updateInstallUi();
+  promptEvent.prompt();
+  const choice = await promptEvent.userChoice;
+  setStatus(choice.outcome === "accepted" ? "התקנת האפליקציה החלה" : "ההתקנה בוטלה");
+}
+
 function currentItem() {
   return state.items[state.index] || null;
+}
+
+function updateModeClasses() {
+  document.body.classList.toggle("view-mode", state.mode === "view");
+  document.body.classList.toggle("edit-mode", state.mode === "edit");
+  document.body.classList.toggle("has-images", state.items.length > 0);
+  document.body.classList.toggle("no-images", state.items.length === 0);
+  document.body.classList.toggle("chrome-pinned", state.chromePinned);
+  document.body.classList.toggle("chrome-idle", state.mode === "edit" && !state.chromePinned);
+  if (els.toolbarPinBtn) {
+    els.toolbarPinBtn.setAttribute("aria-pressed", String(state.chromePinned));
+    els.toolbarPinBtn.textContent = state.chromePinned ? "בטל נעיצה" : "נעיצת כלים";
+  }
+}
+
+function revealChrome() {
+  if (state.mode !== "edit" || state.chromePinned) return;
+  document.body.classList.remove("chrome-idle");
+  clearTimeout(state.chromeHideTimer);
+  state.chromeHideTimer = setTimeout(() => {
+    document.body.classList.add("chrome-idle");
+  }, 2600);
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  if (mode === "view") {
+    state.chromePinned = false;
+    clearTimeout(state.chromeHideTimer);
+    hideCrop();
+  } else {
+    clearTimeout(state.chromeHideTimer);
+  }
+  updateModeClasses();
+  if (mode === "edit") revealChrome();
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    resetView();
+  });
 }
 
 function formatDate(date) {
@@ -134,6 +235,7 @@ function replaceItems(items, label) {
   state.dirty = false;
   els.folderLabel.textContent = label;
   els.countLabel.textContent = String(items.length);
+  updateModeClasses();
   renderThumbs();
   if (items.length) selectImage(0);
   else clearViewer();
@@ -152,6 +254,7 @@ function clearViewer() {
   els.fileLabel.textContent = "אין תמונה פתוחה";
   els.metaLabel.textContent = "";
   els.renameInput.value = "";
+  updateModeClasses();
   draw();
 }
 
@@ -174,6 +277,7 @@ async function selectImage(index) {
     els.fileLabel.textContent = item.name;
     els.renameInput.value = item.name;
     els.metaLabel.textContent = `${state.image.width}×${state.image.height} | ${Math.round(item.file.size / 1024)}KB | ${formatDate(fileDate(item))}`;
+    updateModeClasses();
     renderThumbs();
     setStatus(`${index + 1} מתוך ${state.items.length}`);
   } catch (error) {
@@ -206,7 +310,12 @@ function renderThumbs() {
 function resetView() {
   const stage = els.dropZone.getBoundingClientRect();
   const size = rotatedSize();
-  state.fitZoom = Math.min(stage.width / size.width, stage.height / size.height, 1);
+  const viewPadding = state.mode === "view" ? 18 : 0;
+  const fitWidth = Math.max(1, stage.width - viewPadding * 2) / size.width;
+  const fitHeight = Math.max(1, stage.height - viewPadding * 2) / size.height;
+  state.fitZoom = state.mode === "view"
+    ? Math.min(fitWidth, fitHeight)
+    : Math.min(fitWidth, fitHeight, 1);
   state.zoom = state.fitZoom || 1;
   state.panX = 0;
   state.panY = 0;
@@ -266,6 +375,10 @@ function updateZoomLabel() {
 
 function zoomBy(factor, clientX, clientY) {
   if (!state.image) return;
+  if (state.mode === "view") {
+    resetView();
+    return;
+  }
   const rect = els.canvas.getBoundingClientRect();
   const x = clientX ?? rect.left + rect.width / 2;
   const y = clientY ?? rect.top + rect.height / 2;
@@ -635,7 +748,7 @@ function setupCanvasPan() {
     }
   });
   els.canvas.addEventListener("pointerdown", (event) => {
-    if (!state.image || state.cropMode) return;
+    if (!state.image || state.cropMode || state.mode === "view") return;
     state.draggingCanvas = true;
     state.dragStart = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY };
     els.canvas.setPointerCapture(event.pointerId);
@@ -656,11 +769,25 @@ function setupCanvasPan() {
   }, { passive: false });
 }
 
+function setupChromeReveal() {
+  window.addEventListener("pointermove", revealChrome);
+  window.addEventListener("pointerdown", revealChrome);
+}
+
 function bindUi() {
   els.openFolderBtn.addEventListener("click", loadFolder);
   els.filePicker.addEventListener("change", (event) => loadFiles(event.target.files));
+  els.viewModeBtn.addEventListener("click", () => setMode("view"));
+  els.editModeBtn.addEventListener("click", () => setMode("edit"));
+  els.toolbarPinBtn.addEventListener("click", () => {
+    state.chromePinned = !state.chromePinned;
+    updateModeClasses();
+    revealChrome();
+  });
   $("prevBtn").addEventListener("click", () => move(-1));
   $("nextBtn").addEventListener("click", () => move(1));
+  $("viewPrevBtn").addEventListener("click", () => move(-1));
+  $("viewNextBtn").addEventListener("click", () => move(1));
   $("zoomInBtn").addEventListener("click", () => zoomBy(1.18));
   $("zoomOutBtn").addEventListener("click", () => zoomBy(0.82));
   $("fitBtn").addEventListener("click", resetView);
@@ -681,13 +808,9 @@ function bindUi() {
   $("sortNameBtn").addEventListener("click", () => sortItems("name"));
   $("sortDateBtn").addEventListener("click", () => sortItems("date"));
   $("sortTimeBtn").addEventListener("click", () => sortItems("time"));
-  els.installBtn.addEventListener("click", async () => {
-    if (!state.deferredInstall) return;
-    state.deferredInstall.prompt();
-    await state.deferredInstall.userChoice;
-    state.deferredInstall = null;
-    els.installBtn.hidden = true;
-  });
+  els.windowsInstallBtn?.addEventListener("click", installOrShowHelp);
+  els.installBtn?.addEventListener("click", installOrShowHelp);
+  els.dialogInstallBtn?.addEventListener("click", installOrShowHelp);
 }
 
 function setupKeyboard() {
@@ -698,6 +821,8 @@ function setupKeyboard() {
     if (event.key === "ArrowRight") move(-1);
     if (event.key === "Delete") deleteCurrent();
     if (event.key.toLowerCase() === "f") resetView();
+    if (event.key.toLowerCase() === "e") setMode("edit");
+    if (event.key.toLowerCase() === "v") setMode("view");
     if (event.key === "Escape") hideCrop();
     if (event.ctrlKey && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -722,25 +847,38 @@ async function handleLaunchFiles() {
 }
 
 function registerServiceWorker() {
+  updateInstallUi();
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   }
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     state.deferredInstall = event;
-    els.installBtn.hidden = false;
+    updateInstallUi();
+    setStatus("האפליקציה מוכנה להתקנה");
+  });
+  window.addEventListener("appinstalled", () => {
+    state.deferredInstall = null;
+    updateInstallUi();
+    showInstallHelp();
+    setStatus("האפליקציה הותקנה. ברירת מחדל מגדירים ב-Windows.");
   });
 }
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  if (state.mode === "view" && state.image) resetView();
+});
 window.addEventListener("beforeunload", cleanupUrls);
 
 bindUi();
 setupDragDrop();
 setupCanvasPan();
+setupChromeReveal();
 setupCropDrag();
 setupKeyboard();
 handleLaunchFiles();
 registerServiceWorker();
+updateModeClasses();
 resizeCanvas();
 setStatus("מוכן");

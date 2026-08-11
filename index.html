@@ -22,6 +22,9 @@
           <button id="openFolderBtn" class="primary">פתיחת תיקייה</button>
           <label class="button secondary" for="filePicker">בחירת תמונות</label>
           <input id="filePicker" type="file" accept="image/*" multiple hidden />
+          <button id="viewModeBtn" class="secondary">&#1510;&#1508;&#1497;&#1497;&#1492;</button>
+          <button id="toolbarPinBtn" class="secondary" aria-pressed="false">&#1504;&#1506;&#1497;&#1510;&#1514; &#1499;&#1500;&#1497;&#1501;</button>
+          <button id="windowsInstallBtn" class="secondary">התקנה וברירת מחדל</button>
           <button id="installBtn" class="secondary" hidden>התקנה</button>
         </div>
       </header>
@@ -60,6 +63,10 @@
           </div>
 
           <div id="dropZone" class="canvas-stage">
+            <div class="view-nav" aria-label="&#1504;&#1497;&#1493;&#1493;&#1496; &#1489;&#1514;&#1502;&#1493;&#1504;&#1493;&#1514;">
+              <button id="viewPrevBtn" type="button" title="&#1514;&#1502;&#1493;&#1504;&#1492; &#1511;&#1493;&#1491;&#1502;&#1514;" aria-label="&#1514;&#1502;&#1493;&#1504;&#1492; &#1511;&#1493;&#1491;&#1502;&#1514;">&#8249;</button>
+              <button id="viewNextBtn" type="button" title="&#1514;&#1502;&#1493;&#1504;&#1492; &#1492;&#1489;&#1488;&#1492;" aria-label="&#1514;&#1502;&#1493;&#1504;&#1492; &#1492;&#1489;&#1488;&#1492;">&#8250;</button>
+            </div>
             <div id="emptyState" class="empty-state">
               <strong>גררו תמונות לכאן</strong>
               <span>או פתחו תיקייה כדי לדפדף במהירות עם החיצים, גלגלת העכבר לזום ו־Delete למחיקה.</span>
@@ -125,8 +132,36 @@
             <h2>קיצורים</h2>
             <p>חיצים: מעבר | גלגלת: זום | Ctrl+C: העתקה | Ctrl+S: שמירה | Delete: מחיקה | F: התאמה</p>
           </section>
+
+          <section class="tool-panel compact">
+            <h2>התקנה</h2>
+            <p>להתקנה כאפליקציה ב־Windows הפעילו את הקובץ install-windows.ps1 מתוך תיקיית הפרויקט.</p>
+          </section>
         </aside>
       </main>
+
+      <button id="editModeBtn" class="mode-fab" type="button">&#1506;&#1512;&#1497;&#1499;&#1492;</button>
+      <dialog id="installHelpDialog" class="install-dialog">
+        <form method="dialog">
+          <div class="dialog-head">
+            <h2>התקנה כאפליקציה וברירת מחדל</h2>
+            <button value="close" aria-label="סגור">×</button>
+          </div>
+          <div class="dialog-body">
+            <p id="installSupportStatus"></p>
+            <ol>
+              <li>פתחו את האפליקציה דרך <code>http://127.0.0.1:8788/</code> או דרך כתובת HTTPS.</li>
+              <li>ב-Chrome או Edge לחצו על כפתור ההתקנה באפליקציה, או על אייקון ההתקנה בשורת הכתובת.</li>
+              <li>אחרי ההתקנה, ב-Windows פתחו Settings &gt; Apps &gt; Default apps ובחרו את האפליקציה עבור סוגי תמונות.</li>
+            </ol>
+            <p>אם הדפדפן לא מציע התקנה מקובץ מקומי, הפעילו את <code>Install-App.vbs</code> להתקנת קיצור Windows.</p>
+          </div>
+          <div class="dialog-actions">
+            <button id="dialogInstallBtn" type="button" class="accent">התקן כאפליקציה</button>
+            <button value="close">סגור</button>
+          </div>
+        </form>
+      </dialog>
     </div>
 
     <script src="app.js"></script>

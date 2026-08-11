@@ -25,7 +25,7 @@ body {
   margin: 0;
   width: 100%;
   min-height: 100vh;
-  overflow: auto;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
 }
@@ -90,6 +90,7 @@ button:disabled {
   width: 100vw;
   max-width: 100%;
   min-height: 100dvh;
+  height: 100dvh;
   min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(520px, 1fr);
@@ -315,6 +316,53 @@ h1 {
   background-position: 0 0, 0 11px, 11px -11px, -11px 0;
 }
 
+.mode-fab {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 30;
+  min-width: 74px;
+  min-height: 40px;
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(17, 25, 35, 0.82);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.view-nav {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: none;
+  direction: ltr;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  pointer-events: none;
+}
+
+.view-nav button {
+  width: 50px;
+  height: 86px;
+  min-height: 0;
+  border-radius: 7px;
+  border-color: rgba(244, 247, 251, 0.16);
+  background: rgba(13, 17, 23, 0.42);
+  color: rgba(244, 247, 251, 0.9);
+  font-size: 46px;
+  line-height: 1;
+  pointer-events: auto;
+  opacity: 0.24;
+  transition: opacity 140ms ease, background 140ms ease;
+}
+
+.view-nav button:hover,
+.canvas-stage:hover .view-nav button,
+.view-nav button:focus-visible {
+  opacity: 1;
+  background: rgba(13, 17, 23, 0.74);
+}
+
 .canvas-stage.dragging {
   outline: 2px solid var(--accent);
   outline-offset: -8px;
@@ -325,6 +373,72 @@ h1 {
   height: 100%;
   display: block;
   cursor: grab;
+}
+
+body.view-mode .app-shell {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body.view-mode.no-images .app-shell {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+body.view-mode.has-images .topbar,
+body.view-mode .sidebar,
+body.view-mode .inspector,
+body.view-mode .toolbar,
+body.view-mode .statusbar {
+  display: none;
+}
+
+body.view-mode .workspace {
+  grid-template-columns: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+body.view-mode .viewer-region {
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+body.view-mode.has-images .canvas-stage {
+  height: 100dvh;
+  min-height: 0;
+}
+
+body.view-mode.no-images .canvas-stage {
+  min-height: calc(100dvh - 64px);
+}
+
+body.view-mode.has-images .view-nav {
+  display: flex;
+}
+
+body.edit-mode .mode-fab {
+  display: none;
+}
+
+body.edit-mode.chrome-idle:not(.chrome-pinned) .topbar,
+body.edit-mode.chrome-idle:not(.chrome-pinned) .sidebar,
+body.edit-mode.chrome-idle:not(.chrome-pinned) .inspector,
+body.edit-mode.chrome-idle:not(.chrome-pinned) .toolbar,
+body.edit-mode.chrome-idle:not(.chrome-pinned) .statusbar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.edit-mode .topbar,
+body.edit-mode .sidebar,
+body.edit-mode .inspector,
+body.edit-mode .toolbar,
+body.edit-mode .statusbar {
+  transition: opacity 160ms ease;
+}
+
+body.edit-mode.chrome-idle:not(.chrome-pinned) .viewer-region {
+  grid-template-rows: minmax(0, 1fr);
 }
 
 #imageCanvas:active {
@@ -490,5 +604,36 @@ select {
   .top-actions {
     justify-self: stretch;
     justify-content: flex-start;
+  }
+
+  body.view-mode.has-images {
+    overflow: hidden;
+  }
+
+  body.view-mode.has-images .app-shell {
+    height: 100dvh;
+  }
+
+  body.view-mode .workspace {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  body.view-mode .viewer-region {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .mode-fab {
+    top: 10px;
+    left: 10px;
+  }
+
+  .view-nav {
+    padding: 0 8px;
+  }
+
+  .view-nav button {
+    width: 42px;
+    height: 72px;
+    font-size: 38px;
   }
 }
