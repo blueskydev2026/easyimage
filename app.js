@@ -85,7 +85,8 @@ function isStandaloneApp() {
 function updateInstallUi() {
   if (!els.installBtn) return;
   const canInstall = Boolean(state.deferredInstall);
-  els.installBtn.hidden = !canInstall;
+  els.installBtn.hidden = isStandaloneApp();
+  els.installBtn.textContent = canInstall ? "התקנה" : "התקנה כאפליקציה";
   if (els.dialogInstallBtn) {
     els.dialogInstallBtn.disabled = !canInstall;
     els.dialogInstallBtn.textContent = canInstall ? "התקן כאפליקציה" : "הדפדפן לא מציע התקנה כרגע";

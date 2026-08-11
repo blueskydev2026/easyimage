@@ -13,7 +13,14 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.all(ASSETS.map(async (path) => {
+      const response = await fetch(new Request(path, { cache: "reload" }));
+      if (!response.ok) throw new Error(`Failed to cache ${path}: ${response.status}`);
+      await cache.put(path, response);
+    }));
+  })());
   self.skipWaiting();
 });
 
