@@ -4,6 +4,8 @@
 
 ה־PWA משתמש ב־`manifest.webmanifest` יחיד, כולל אייקונים רגילים ו־maskable, ופועל גם במצב offline לאחר הביקור הראשון. התקנה דורשת HTTPS (או localhost לפיתוח); פתיחה ישירה דרך `file://` אינה ניתנת להתקנה.
 
+מספר הגרסה מוגדר פעם אחת בקובץ `version.js`, מוצג תמיד בפינת המסך ומשמש גם לגרסת ה־cache. בכל שחרור יש לעדכן את `EASYIMAGE_VERSION` לפי Semantic Versioning.
+
 ## התקנה כמו daily-pdf-reader
 
 כדי שהדפדפן יציע התקנה באופן טבעי, האפליקציה צריכה להיפתח מכתובת HTTPS, למשל GitHub Pages:

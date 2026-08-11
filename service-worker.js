@@ -1,9 +1,12 @@
-const CACHE_NAME = "easyimage-v8";
+importScripts("./version.js");
+
+const CACHE_NAME = `easyimage-v${globalThis.EASYIMAGE_VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./version.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
