@@ -527,6 +527,26 @@ body.viewer-mode.no-images .canvas-stage {
   min-height: calc(100dvh - 64px);
 }
 
+body.viewer-mode.no-images .workspace {
+  display: block;
+  height: 100%;
+}
+
+body.viewer-mode.no-images .viewer-region {
+  height: calc(100dvh - 64px);
+}
+
+body.viewer-mode.no-images .sidebar,
+body.viewer-mode.no-images .inspector,
+body.viewer-mode.no-images .toolbar,
+body.viewer-mode.no-images .statusbar {
+  display: none;
+}
+
+body.viewer-mode.no-images #imageCanvas {
+  cursor: default;
+}
+
 body.viewer-mode.has-images .view-nav {
   display: flex;
 }
@@ -614,19 +634,47 @@ body.viewer-mode.has-images .statusbar {
 
 .empty-state {
   position: absolute;
-  inset: 0;
+  inset: 18px;
   display: grid;
   place-content: center;
-  gap: 10px;
-  padding: 24px;
+  gap: 12px;
+  max-width: 680px;
+  margin: auto;
+  min-height: 300px;
+  padding: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(45, 212, 191, 0.14), transparent 34%),
+    rgba(17, 25, 35, 0.86);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
   text-align: center;
   color: var(--muted);
   pointer-events: none;
 }
 
+.empty-state::before {
+  content: "";
+  width: 64px;
+  height: 48px;
+  justify-self: center;
+  margin-bottom: 6px;
+  border: 2px solid rgba(45, 212, 191, 0.7);
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, transparent 52%, rgba(45, 212, 191, 0.22) 52%),
+    linear-gradient(45deg, rgba(56, 189, 248, 0.2) 26%, transparent 26%);
+}
+
 .empty-state strong {
   color: var(--text);
-  font-size: 24px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.empty-state span {
+  max-width: 520px;
+  line-height: 1.7;
 }
 
 .crop-overlay {

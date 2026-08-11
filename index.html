@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#111827" />
     <title>ניהול תמונות</title>
-    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -66,7 +66,8 @@
                 </div>
                 <button id="copyImageBtn" type="button">העתק תמונה</button>
                 <button id="copyCropBtn" type="button">סמן קטע להעתקה</button>
-                <button id="printBtn" type="button">הדפסה</button>
+                <button id="quickPrintBtn" type="button">&#1492;&#1491;&#1508;&#1505;&#1492; &#1502;&#1492;&#1497;&#1512;&#1492;</button>
+                <button id="printBtn" type="button">&#1488;&#1508;&#1513;&#1512;&#1493;&#1497;&#1493;&#1514; &#1492;&#1491;&#1508;&#1505;&#1492;</button>
                 <button id="hideToolsBtn" type="button">הסתר כלים</button>
                 <button id="deleteBtn" type="button" class="danger">מחק</button>
               </div>
@@ -191,7 +192,6 @@
                     <option value="sized">הדפסה לפי גודל</option>
                     <option value="multi">מספר תמונות בדף</option>
                     <option value="copies">תמונה אחת כמה פעמים</option>
-                    <option value="area">איזור נבחר</option>
                   </select>
                 </label>
               </div>
@@ -202,19 +202,22 @@
               </div>
             </section>
             <section>
-              <h3>הדפסה מהירה</h3>
-              <p>תמונה נוכחית על A4, מותאמת למלוא הדף ביחס תקין.</p>
-              <button id="dialogQuickPrintBtn" type="button" class="accent wide">הדפס מהיר</button>
+              <h3>הדפסת תמונה בדף מלא</h3>
+              <p>התמונה הנוכחית תודפס על דף A4 ותוגדל עד המקסימום האפשרי בלי חיתוך.</p>
+              <button id="dialogQuickPrintBtn" type="button" class="accent wide">הדפס דף מלא</button>
             </section>
             <section>
-              <h3>הדפסה לפי גודל</h3>
+              <h3>הדפסת תמונה לפי גודל</h3>
               <label>
                 גודל
                 <select id="printSizePreset">
                   <option value="10x15">10x15 ס"מ</option>
                   <option value="13x18">13x18 ס"מ</option>
                   <option value="15x21">15x21 ס"מ</option>
+                  <option value="20x25">20x25 ס"מ</option>
+                  <option value="a6">A6</option>
                   <option value="a5">A5</option>
+                  <option value="a4">A4</option>
                   <option value="custom">גודל מותאם</option>
                 </select>
               </label>
@@ -224,7 +227,7 @@
                   <option value="auto">לפי כיוון התמונה</option>
                   <option value="width">לפי רוחב</option>
                   <option value="height">לפי גובה</option>
-                  <option value="box">מסגרת רוחב וגובה</option>
+                  <option value="box">בתוך מסגרת רוחב וגובה</option>
                 </select>
               </label>
               <div class="grid2">
@@ -240,7 +243,7 @@
               <button id="printSizedBtn" type="button" class="wide">הדפס בגודל הנבחר</button>
             </section>
             <section>
-              <h3>מספר תמונות בדף</h3>
+              <h3>הדפסת מספר תמונות בדף</h3>
               <p id="printSelectionLabel">נבחרו 0 תמונות</p>
               <div class="grid2">
                 <label>
@@ -255,7 +258,7 @@
               <button id="printSelectedBtn" type="button" class="wide">הדפס תמונות נבחרות</button>
             </section>
             <section>
-              <h3>תמונה אחת כמה פעמים</h3>
+              <h3>הדפסת תמונה כמה פעמים בדף</h3>
               <div class="grid2">
                 <label>
                   מספר עותקים
@@ -267,13 +270,6 @@
                 </label>
               </div>
               <button id="printCopiesBtn" type="button" class="wide">הדפס עותקים בדף</button>
-            </section>
-            <section>
-              <h3>הדפסת איזור נבחר</h3>
-              <div class="grid2">
-                <button id="choosePrintAreaBtn" type="button">בחר איזור</button>
-                <button id="printAreaBtn" type="button">הדפס איזור</button>
-              </div>
             </section>
           </div>
           <div class="dialog-actions">

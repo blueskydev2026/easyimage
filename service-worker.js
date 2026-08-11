@@ -1,9 +1,10 @@
-const CACHE_NAME = "photo-manager-v6";
+const CACHE_NAME = "photo-manager-v7";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./manifest.json",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

@@ -1,0 +1,54 @@
+{
+  "name": "\u05e0\u05d9\u05d4\u05d5\u05dc \u05ea\u05de\u05d5\u05e0\u05d5\u05ea",
+  "short_name": "\u05ea\u05de\u05d5\u05e0\u05d5\u05ea",
+  "id": "./",
+  "description": "\u05e6\u05e4\u05d9\u05d9\u05d4 \u05d5\u05e0\u05d9\u05d4\u05d5\u05dc \u05de\u05d4\u05d9\u05e8 \u05e9\u05dc \u05ea\u05de\u05d5\u05e0\u05d5\u05ea \u05de\u05e7\u05d5\u05de\u05d9\u05d5\u05ea.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0d1117",
+  "theme_color": "#111827",
+  "dir": "rtl",
+  "lang": "he",
+  "orientation": "any",
+  "categories": ["photo", "productivity", "utilities"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".avif"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "images",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  }
+}

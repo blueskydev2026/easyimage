@@ -51,6 +51,7 @@ const els = {
   batchPattern: $("batchPattern"),
   batchStart: $("batchStart"),
   batchSort: $("batchSort"),
+  quickPrintBtn: $("quickPrintBtn"),
   printDialog: $("printDialog"),
   printSelectionLabel: $("printSelectionLabel"),
   printSizePreset: $("printSizePreset"),
@@ -743,7 +744,10 @@ function getPrintSizeCm(image) {
     "10x15": { width: 10, height: 15 },
     "13x18": { width: 13, height: 18 },
     "15x21": { width: 15, height: 21 },
-    a5: { width: 14.8, height: 21 }
+    "20x25": { width: 20, height: 25 },
+    a6: { width: 10.5, height: 14.8 },
+    a5: { width: 14.8, height: 21 },
+    a4: { width: 21, height: 29.7 }
   };
   const base = preset !== "custom" ? sizes[preset] || sizes["10x15"] : {
     width: Math.max(1, Number(els.printCustomWidth?.value) || 10),
@@ -1298,13 +1302,12 @@ function bindUi() {
   $("rotateRightBtn").addEventListener("click", () => rotate(90));
   $("saveBtn").addEventListener("click", saveImage);
   $("copyImageBtn").addEventListener("click", copyImage);
+  els.quickPrintBtn?.addEventListener("click", printQuick);
   $("printBtn").addEventListener("click", openPrintManager);
   $("dialogQuickPrintBtn").addEventListener("click", printQuick);
   $("printSizedBtn").addEventListener("click", printSized);
   $("printSelectedBtn").addEventListener("click", printSelectedImages);
   $("printCopiesBtn").addEventListener("click", printCurrentCopies);
-  $("choosePrintAreaBtn").addEventListener("click", choosePrintArea);
-  $("printAreaBtn").addEventListener("click", printSelectedArea);
   [
     els.printPageOrientation,
     els.printPreviewMode,
@@ -1324,8 +1327,7 @@ function bindUi() {
     ["dialogQuickPrintBtn", "quick"],
     ["printSizedBtn", "sized"],
     ["printSelectedBtn", "multi"],
-    ["printCopiesBtn", "copies"],
-    ["printAreaBtn", "area"]
+    ["printCopiesBtn", "copies"]
   ].forEach(([id, mode]) => {
     const el = $(id);
     el?.addEventListener("pointerenter", () => {
