@@ -25,6 +25,7 @@
           <button class="primary-btn" id="openFilesBtn" type="button">פתח תמונות</button>
           <button class="soft-btn" id="openFolderBtn" type="button">פתח תיקייה</button>
           <button class="soft-btn install-btn" id="installBtn" type="button" hidden>התקן</button>
+          <button class="icon-btn" id="toggleFilmstripBtn" type="button" aria-label="פתח רשימת תמונות" title="תמונות">▦</button>
           <button class="icon-btn" id="toggleToolsBtn" type="button" aria-label="פתח סרגל פעולות" title="פעולות">☰</button>
         </div>
       </header>
@@ -76,6 +77,10 @@
               <button id="fitBtn" type="button">התאם למסך</button>
               <button id="actualBtn" type="button">גודל מלא</button>
             </div>
+            <label class="field range-field">
+              <span>זום <output id="zoomValue">100%</output></span>
+              <input id="zoomSlider" type="range" min="25" max="400" step="5" value="100">
+            </label>
           </div>
 
           <div class="tool-group">
@@ -117,6 +122,7 @@
           <div class="status" id="statusLine">מוכן</div>
         </aside>
       </section>
+      <button class="scrim" id="scrim" type="button" aria-label="סגור סרגלים" hidden></button>
     </main>
 
     <input id="filePicker" type="file" accept="image/*" multiple hidden>

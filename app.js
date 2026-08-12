@@ -25,13 +25,18 @@ const els = {
   collectionMeta: document.querySelector("#collectionMeta"),
   imageCounter: document.querySelector("#imageCounter"),
   activeFileName: document.querySelector("#activeFileName"),
+  filmstrip: document.querySelector(".filmstrip"),
+  toggleFilmstripBtn: document.querySelector("#toggleFilmstripBtn"),
   detailsPanel: document.querySelector("#detailsPanel"),
   toggleToolsBtn: document.querySelector("#toggleToolsBtn"),
   closeToolsBtn: document.querySelector("#closeToolsBtn"),
+  scrim: document.querySelector("#scrim"),
   rotateLeftBtn: document.querySelector("#rotateLeftBtn"),
   rotateRightBtn: document.querySelector("#rotateRightBtn"),
   fitBtn: document.querySelector("#fitBtn"),
   actualBtn: document.querySelector("#actualBtn"),
+  zoomSlider: document.querySelector("#zoomSlider"),
+  zoomValue: document.querySelector("#zoomValue"),
   cropModeBtn: document.querySelector("#cropModeBtn"),
   saveCropBtn: document.querySelector("#saveCropBtn"),
   renameInput: document.querySelector("#renameInput"),
@@ -47,6 +52,8 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
+const minZoom = 0.25;
+const maxZoom = 4;
 
 function setStatus(message) {
   els.statusLine.textContent = message;
@@ -105,6 +112,28 @@ function renderAll(sourceName = "") {
     : "בחרו תמונות או תיקייה כדי להתחיל";
 }
 
+function updatePanels() {
+  const anyOpen = els.detailsPanel.classList.contains("open") || els.filmstrip.classList.contains("open");
+  els.scrim.hidden = !anyOpen;
+  els.toggleToolsBtn.setAttribute("aria-expanded", String(els.detailsPanel.classList.contains("open")));
+  els.toggleFilmstripBtn.setAttribute("aria-expanded", String(els.filmstrip.classList.contains("open")));
+}
+
+function togglePanel(panel) {
+  const target = panel === "tools" ? els.detailsPanel : els.filmstrip;
+  const other = panel === "tools" ? els.filmstrip : els.detailsPanel;
+  const willOpen = !target.classList.contains("open");
+  other.classList.remove("open");
+  target.classList.toggle("open", willOpen);
+  updatePanels();
+}
+
+function closePanels() {
+  els.detailsPanel.classList.remove("open");
+  els.filmstrip.classList.remove("open");
+  updatePanels();
+}
+
 function renderThumbs() {
   els.thumbs.replaceChildren();
   state.images.forEach((image, index) => {
@@ -134,6 +163,8 @@ function renderViewer() {
   state.rotation = image?.rotation ?? 0;
   els.mainImage.style.setProperty("--rotation", `${state.rotation}deg`);
   els.mainImage.style.setProperty("--zoom", state.zoom);
+  els.zoomSlider.value = Math.round(state.zoom * 100);
+  els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
   els.prevBtn.disabled = state.images.length < 2;
   els.nextBtn.disabled = state.images.length < 2;
   setToolDisabled(!image);
@@ -146,6 +177,14 @@ function setToolDisabled(disabled) {
     els.saveCropBtn, els.renameBtn, els.copyBtn, els.downloadBtn, els.printBtn,
     els.batchRenameBtn,
   ].forEach((button) => { button.disabled = disabled; });
+  els.zoomSlider.disabled = disabled;
+}
+
+function setZoom(value) {
+  state.zoom = Math.min(maxZoom, Math.max(minZoom, value));
+  els.mainImage.style.setProperty("--zoom", state.zoom);
+  els.zoomSlider.value = Math.round(state.zoom * 100);
+  els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
 }
 
 function selectImage(index) {
@@ -154,6 +193,7 @@ function selectImage(index) {
   state.zoom = 1;
   renderThumbs();
   renderViewer();
+  if (state.images.length) closePanels();
 }
 
 async function openFiles(files) {
@@ -421,12 +461,15 @@ function bindEvents() {
   els.emptyOpenFolderBtn.addEventListener("click", openFolder);
   els.prevBtn.addEventListener("click", () => selectImage(state.index - 1));
   els.nextBtn.addEventListener("click", () => selectImage(state.index + 1));
-  els.toggleToolsBtn.addEventListener("click", () => els.detailsPanel.classList.toggle("open"));
-  els.closeToolsBtn.addEventListener("click", () => els.detailsPanel.classList.remove("open"));
+  els.toggleToolsBtn.addEventListener("click", () => togglePanel("tools"));
+  els.toggleFilmstripBtn.addEventListener("click", () => togglePanel("filmstrip"));
+  els.closeToolsBtn.addEventListener("click", closePanels);
+  els.scrim.addEventListener("click", closePanels);
   els.rotateLeftBtn.addEventListener("click", () => rotate(-90));
   els.rotateRightBtn.addEventListener("click", () => rotate(90));
-  els.fitBtn.addEventListener("click", () => { state.zoom = 1; renderViewer(); });
-  els.actualBtn.addEventListener("click", () => { state.zoom = 1.8; renderViewer(); });
+  els.fitBtn.addEventListener("click", () => setZoom(1));
+  els.actualBtn.addEventListener("click", () => setZoom(1.8));
+  els.zoomSlider.addEventListener("input", () => setZoom(Number(els.zoomSlider.value) / 100));
   els.downloadBtn.addEventListener("click", downloadActive);
   els.copyBtn.addEventListener("click", copyImage);
   els.renameBtn.addEventListener("click", renameActive);
@@ -460,12 +503,21 @@ function bindEvents() {
   els.stage.addEventListener("pointerup", () => {
     state.dragStart = null;
   });
+  els.stage.addEventListener("wheel", (event) => {
+    if (!activeImage()) return;
+    event.preventDefault();
+    const direction = event.deltaY > 0 ? -1 : 1;
+    const factor = direction > 0 ? 1.1 : 0.9;
+    setZoom(state.zoom * factor);
+  }, { passive: false });
 
   window.addEventListener("keydown", (event) => {
     if (event.target instanceof HTMLInputElement) return;
     if (event.key === "ArrowLeft") selectImage(state.index + 1);
     if (event.key === "ArrowRight") selectImage(state.index - 1);
-    if (event.key === "Escape") els.detailsPanel.classList.remove("open");
+    if (event.key === "Escape") closePanels();
+    if (event.key.toLowerCase() === "t") togglePanel("tools");
+    if (event.key.toLowerCase() === "g") togglePanel("filmstrip");
   });
 
   window.addEventListener("dragover", (event) => {
@@ -489,6 +541,7 @@ function bindEvents() {
 
 bindEvents();
 renderViewer();
+updatePanels();
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
