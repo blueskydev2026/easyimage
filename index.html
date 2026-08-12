@@ -1,56 +1,125 @@
 <!doctype html>
 <html lang="he" dir="rtl">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#15181d" />
-    <meta name="description" content="EasyImage - צפייה, עריכה, ארגון והדפסה של תמונות באופן מקומי ופרטי." />
-    <script>
-      (() => {
-        const manifest = {
-          name: 'EasyImage',
-          short_name: 'EasyImage',
-          description: 'צפייה, עריכה, ארגון והדפסה של תמונות באופן מקומי ופרטי.',
-          start_url: '/easyimage/',
-          scope: '/easyimage/',
-          display: 'standalone',
-          background_color: '#15181d',
-          theme_color: '#15181d',
-          dir: 'rtl',
-          lang: 'he',
-          icons: [
-            { src: '/easyimage/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-            { src: '/easyimage/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-            { src: '/easyimage/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-          ],
-          file_handlers: [
-            {
-              action: '/easyimage/',
-              accept: {
-                'image/png': ['.png'],
-                'image/jpeg': ['.jpg', '.jpeg'],
-                'image/webp': ['.webp'],
-                'image/gif': ['.gif'],
-                'image/bmp': ['.bmp'],
-                'image/avif': ['.avif'],
-              },
-            },
-          ],
-          categories: ['photo', 'productivity', 'utilities'],
-        };
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = URL.createObjectURL(blob);
-        document.head.append(link);
-      })();
-    </script>
-    <link rel="manifest" href="pwa" />
-    <link rel="icon" href="%BASE_URL%icons/icon.svg" type="image/svg+xml" />
-    <title>EasyImage</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="PWA נוחה לניהול, צפייה ועריכת תמונות מהמחשב">
+    <title>גלריה זורמת</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">▣</span>
+          <div>
+            <h1>גלריה זורמת</h1>
+            <p id="collectionMeta">בחרו תמונות או תיקייה כדי להתחיל</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="primary-btn" id="openFilesBtn" type="button">פתח תמונות</button>
+          <button class="soft-btn" id="openFolderBtn" type="button">פתח תיקייה</button>
+          <button class="soft-btn install-btn" id="installBtn" type="button" hidden>התקן</button>
+          <button class="icon-btn" id="toggleToolsBtn" type="button" aria-label="פתח סרגל פעולות" title="פעולות">☰</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="filmstrip" aria-label="תמונות בתיקייה">
+          <div class="filmstrip-head">
+            <strong>תמונות</strong>
+            <span id="imageCounter">0 / 0</span>
+          </div>
+          <div class="thumbs" id="thumbs"></div>
+        </aside>
+
+        <section class="viewer" aria-label="מציג תמונות">
+          <button class="nav-btn prev" id="prevBtn" type="button" aria-label="תמונה קודמת">‹</button>
+          <div class="stage" id="stage">
+            <div class="empty-state" id="emptyState">
+              <div class="empty-art" aria-hidden="true"></div>
+              <h2>כל התמונות במקום אחד</h2>
+              <p>פתחו קבצי תמונה או תיקייה שלמה, דפדפו עם החיצים, וערכו פעולות מהירות מהסרגל הצדדי.</p>
+              <div class="empty-actions">
+                <button class="primary-btn" id="emptyOpenFilesBtn" type="button">בחירת תמונות</button>
+                <button class="soft-btn" id="emptyOpenFolderBtn" type="button">בחירת תיקייה</button>
+              </div>
+              <small>אפשר גם לגרור תמונות לחלון או להדביק מהלוח.</small>
+            </div>
+            <img id="mainImage" alt="">
+            <canvas id="editCanvas" hidden></canvas>
+            <div class="crop-box" id="cropBox" hidden></div>
+            <div class="drop-hint" id="dropHint">שחררו כאן כדי לפתוח</div>
+          </div>
+          <button class="nav-btn next" id="nextBtn" type="button" aria-label="תמונה הבאה">›</button>
+        </section>
+
+        <aside class="details" id="detailsPanel" aria-label="סרגל פעולות">
+          <div class="panel-head">
+            <div>
+              <strong>פעולות</strong>
+              <span id="activeFileName">אין תמונה</span>
+            </div>
+            <button class="icon-btn" id="closeToolsBtn" type="button" aria-label="סגור סרגל פעולות">×</button>
+          </div>
+
+          <div class="tool-group">
+            <h2>צפייה</h2>
+            <div class="tool-grid">
+              <button id="rotateLeftBtn" type="button">↺ סובב שמאלה</button>
+              <button id="rotateRightBtn" type="button">↻ סובב ימינה</button>
+              <button id="fitBtn" type="button">התאם למסך</button>
+              <button id="actualBtn" type="button">גודל מלא</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h2>חיתוך</h2>
+            <p>לחצו וגררו על התמונה כדי לבחור אזור.</p>
+            <div class="tool-grid">
+              <button id="cropModeBtn" type="button">הפעל חיתוך</button>
+              <button id="saveCropBtn" type="button">שמור חיתוך</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h2>קובץ</h2>
+            <label class="field">
+              <span>שם חדש</span>
+              <input id="renameInput" type="text" placeholder="שם הקובץ">
+            </label>
+            <div class="tool-grid">
+              <button id="renameBtn" type="button">שנה שם</button>
+              <button id="copyBtn" type="button">העתק תמונה</button>
+              <button id="downloadBtn" type="button">שמור עותק</button>
+              <button id="printBtn" type="button">הדפס</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h2>שינוי שם לקבוצה</h2>
+            <label class="field">
+              <span>תבנית שם</span>
+              <input id="batchPattern" type="text" value="תמונה-{n}">
+            </label>
+            <label class="field compact">
+              <span>מספר התחלתי</span>
+              <input id="batchStart" type="number" min="1" value="1">
+            </label>
+            <button id="batchRenameBtn" type="button">שנה שמות לכל התמונות</button>
+          </div>
+
+          <div class="status" id="statusLine">מוכן</div>
+        </aside>
+      </section>
+    </main>
+
+    <input id="filePicker" type="file" accept="image/*" multiple hidden>
+    <script src="./app.js" type="module"></script>
   </body>
 </html>

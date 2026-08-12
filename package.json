@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/generate-icons.mjs && vite build",
+    "build": "node scripts/generate-icons.mjs && node scripts/build-static.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node scripts/generate-icons.mjs && node tests/run-tests.mjs"
+    "test": "node --check app.js && node scripts/generate-icons.mjs && node tests/run-tests.mjs"
   },
   "devDependencies": {
     "vite": "^7.1.1"

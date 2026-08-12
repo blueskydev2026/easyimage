@@ -1,37 +1,31 @@
-import assert from 'node:assert/strict';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
-const html = await readFile('index.html', 'utf8');
-const builtHtml = await readFile('dist/index.html', 'utf8').catch(() => '');
-const manifest = JSON.parse(await readFile('manifest.webmanifest', 'utf8'));
-const pwaManifest = JSON.parse(await readFile('public/pwa', 'utf8'));
-const appManifest = JSON.parse(await readFile('public/app.json', 'utf8'));
-const manifestJson = JSON.parse(await readFile('public/manifest.json', 'utf8'));
-const publicManifest = JSON.parse(await readFile('public/manifest.webmanifest', 'utf8'));
-const serviceWorker = await readFile('public/sw.js', 'utf8');
-const main = await readFile('src/main.js', 'utf8');
-const files = await readFile('src/files.js', 'utf8');
-const state = await readFile('src/state.js', 'utf8');
+const requiredFiles = [
+  "index.html",
+  "app.js",
+  "styles.css",
+  "manifest.webmanifest",
+  "sw.js",
+  "icons/icon.svg",
+];
 
-assert.match(html, /lang="he"/);
-assert.match(html, /dir="rtl"/);
-assert.match(html, /URL\.createObjectURL\(blob\)/);
-assert.equal(manifest.display, 'standalone');
-assert.equal(pwaManifest.display, 'standalone');
-assert.equal(appManifest.display, 'standalone');
-assert.equal(manifestJson.display, 'standalone');
-assert.deepEqual(publicManifest.file_handlers, manifest.file_handlers);
-assert.ok(manifest.file_handlers?.length);
-assert.ok(manifest.icons.some((icon) => icon.sizes === '192x192' && icon.type === 'image/png'));
-assert.ok(manifest.icons.some((icon) => icon.sizes === '512x512' && icon.type === 'image/png'));
-assert.ok((await stat('public/icons/icon-192.png')).size > 500);
-assert.ok((await stat('public/icons/icon-512.png')).size > 1000);
-if (builtHtml) assert.match(builtHtml, /href="pwa"/);
-assert.match(serviceWorker, /Promise\.allSettled/);
-assert.match(main, /showDirectoryPicker/);
-assert.match(files, /launchQueue/);
-assert.match(main, /navigator\.serviceWorker/);
-assert.match(serviceWorker, /CACHE_NAME/);
-assert.match(state, /localeCompare/);
+for (const file of requiredFiles) {
+  if (!existsSync(file)) throw new Error(`Missing required file: ${file}`);
+}
 
-console.log('All EasyImage smoke tests passed.');
+const manifest = JSON.parse(await readFile("manifest.webmanifest", "utf8"));
+if (manifest.display !== "standalone") throw new Error("PWA display must be standalone");
+if (!manifest.file_handlers?.length) throw new Error("Missing image file handlers");
+
+const html = await readFile("index.html", "utf8");
+for (const asset of ["app.js", "styles.css", "manifest.webmanifest"]) {
+  if (!html.includes(asset)) throw new Error(`index.html does not reference ${asset}`);
+}
+
+const app = await readFile("app.js", "utf8");
+for (const feature of ["showDirectoryPicker", "launchQueue", "ClipboardItem", "beforeinstallprompt"]) {
+  if (!app.includes(feature)) throw new Error(`Missing expected feature: ${feature}`);
+}
+
+console.log("PWA checks passed");
