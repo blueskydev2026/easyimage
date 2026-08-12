@@ -1,5 +1,6 @@
 const CACHE_NAME = 'easyimage-v2.0.0';
-const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon.svg'];
+const BASE = '/easyimage/';
+const ASSETS = [BASE, `${BASE}index.html`, `${BASE}manifest.webmanifest`, `${BASE}icons/icon.svg`];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -20,6 +21,6 @@ self.addEventListener('fetch', (event) => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
       return response;
-    }).catch(() => caches.match('/')))
+    }).catch(() => caches.match(BASE)))
   );
 });

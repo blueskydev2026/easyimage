@@ -29,8 +29,10 @@ npm run build
 ## פרסום ל-GitHub Pages
 
 1. הרץ `npm run build`.
-2. פרסם את תיקיית `dist` דרך GitHub Pages או GitHub Actions.
-3. ודא שהאתר נטען דרך HTTPS כדי לאפשר התקנת PWA מלאה.
+2. הריפו מוגדר לפרסום תחת `/easyimage/` באמצעות `vite.config.js`.
+3. הפעל GitHub Pages במצב GitHub Actions.
+4. דחיפה ל-`main` תריץ את workflow הפריסה ותפרסם את תיקיית `dist`.
+5. ודא שהאתר נטען דרך HTTPS כדי לאפשר התקנת PWA מלאה.
 
 ## התקנת PWA
 

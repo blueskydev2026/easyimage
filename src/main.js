@@ -298,8 +298,10 @@ window.addEventListener('keydown', (event) => {
   if (event.key === 'Delete') removeActive();
 });
 
+const appBase = import.meta.env.BASE_URL;
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => message('לא ניתן היה לרשום Service Worker'));
+  navigator.serviceWorker.register(`${appBase}sw.js`).catch(() => message('לא ניתן היה לרשום Service Worker'));
 }
 
 if (localStorage.getItem('easyimage.theme') === 'light') {
