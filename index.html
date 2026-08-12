@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#15181d" />
     <meta name="description" content="EasyImage - צפייה, עריכה, ארגון והדפסה של תמונות באופן מקומי ופרטי." />
+    <script>
+      (() => {
+        const manifest = {
+          name: 'EasyImage',
+          short_name: 'EasyImage',
+          description: 'צפייה, עריכה, ארגון והדפסה של תמונות באופן מקומי ופרטי.',
+          start_url: '/easyimage/',
+          scope: '/easyimage/',
+          display: 'standalone',
+          background_color: '#15181d',
+          theme_color: '#15181d',
+          dir: 'rtl',
+          lang: 'he',
+          icons: [
+            { src: '/easyimage/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: '/easyimage/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: '/easyimage/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+          file_handlers: [
+            {
+              action: '/easyimage/',
+              accept: {
+                'image/png': ['.png'],
+                'image/jpeg': ['.jpg', '.jpeg'],
+                'image/webp': ['.webp'],
+                'image/gif': ['.gif'],
+                'image/bmp': ['.bmp'],
+                'image/avif': ['.avif'],
+              },
+            },
+          ],
+          categories: ['photo', 'productivity', 'utilities'],
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
+        document.head.append(link);
+      })();
+    </script>
     <link rel="manifest" href="pwa" />
     <link rel="icon" href="%BASE_URL%icons/icon.svg" type="image/svg+xml" />
     <title>EasyImage</title>

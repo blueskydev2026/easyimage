@@ -15,6 +15,7 @@ const state = await readFile('src/state.js', 'utf8');
 
 assert.match(html, /lang="he"/);
 assert.match(html, /dir="rtl"/);
+assert.match(html, /URL\.createObjectURL\(blob\)/);
 assert.equal(manifest.display, 'standalone');
 assert.equal(pwaManifest.display, 'standalone');
 assert.equal(appManifest.display, 'standalone');
