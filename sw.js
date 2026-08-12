@@ -3,6 +3,7 @@ const BASE = '/easyimage/';
 const ASSETS = [
   BASE,
   `${BASE}index.html`,
+  `${BASE}pwa`,
   `${BASE}app.json`,
   `${BASE}manifest.json`,
   `${BASE}manifest.webmanifest`,
