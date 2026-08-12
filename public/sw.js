@@ -3,6 +3,7 @@ const BASE = '/easyimage/';
 const ASSETS = [
   BASE,
   `${BASE}index.html`,
+  `${BASE}app.json`,
   `${BASE}manifest.json`,
   `${BASE}manifest.webmanifest`,
   `${BASE}site.webmanifest`,
@@ -13,7 +14,11 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(ASSETS.map((asset) => cache.add(asset)))
+    )
+  );
   self.skipWaiting();
 });
 
