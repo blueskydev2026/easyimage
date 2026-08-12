@@ -6,6 +6,11 @@ const state = {
   cropMode: false,
   crop: null,
   dragStart: null,
+  fitZoom: 1,
+  panX: 0,
+  panY: 0,
+  panStart: null,
+  panOrigin: null,
 };
 
 const els = {
@@ -162,9 +167,7 @@ function renderViewer() {
   els.mainImage.alt = image?.name ?? "";
   state.rotation = image?.rotation ?? 0;
   els.mainImage.style.setProperty("--rotation", `${state.rotation}deg`);
-  els.mainImage.style.setProperty("--zoom", state.zoom);
-  els.zoomSlider.value = Math.round(state.zoom * 100);
-  els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+  applyZoomUi();
   els.prevBtn.disabled = state.images.length < 2;
   els.nextBtn.disabled = state.images.length < 2;
   setToolDisabled(!image);
@@ -182,17 +185,81 @@ function setToolDisabled(disabled) {
 
 function setZoom(value) {
   state.zoom = Math.min(maxZoom, Math.max(minZoom, value));
+  clampPan();
+  applyZoomUi();
+}
+
+function applyZoomUi() {
   els.mainImage.style.setProperty("--zoom", state.zoom);
+  els.mainImage.style.setProperty("--pan-x", `${state.panX}px`);
+  els.mainImage.style.setProperty("--pan-y", `${state.panY}px`);
   els.zoomSlider.value = Math.round(state.zoom * 100);
   els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+}
+
+function calculateFitZoom() {
+  const image = activeImage();
+  if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) return 1;
+  const stageRect = els.stage.getBoundingClientRect();
+  const availableWidth = Math.max(80, stageRect.width - 24);
+  const availableHeight = Math.max(80, stageRect.height - 24);
+  const rotated = image.rotation % 180 !== 0;
+  const imageWidth = rotated ? els.mainImage.naturalHeight : els.mainImage.naturalWidth;
+  const imageHeight = rotated ? els.mainImage.naturalWidth : els.mainImage.naturalHeight;
+  const baseFit = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
+  const cssFit = Math.min(availableWidth / imageWidth, availableHeight / imageHeight, 1);
+  state.fitZoom = Math.min(maxZoom, Math.max(minZoom, baseFit / cssFit));
+  return state.fitZoom;
+}
+
+function fitImageToStage() {
+  resetPan();
+  setZoom(calculateFitZoom());
+}
+
+function resetPan() {
+  state.panX = 0;
+  state.panY = 0;
+  state.panStart = null;
+  state.panOrigin = null;
+}
+
+function panBounds() {
+  const image = activeImage();
+  if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) return { x: 0, y: 0 };
+  const stageRect = els.stage.getBoundingClientRect();
+  const imageRect = els.mainImage.getBoundingClientRect();
+  const overflowX = Math.max(0, imageRect.width - stageRect.width);
+  const overflowY = Math.max(0, imageRect.height - stageRect.height);
+  return { x: overflowX / 2, y: overflowY / 2 };
+}
+
+function clampPan() {
+  const bounds = panBounds();
+  state.panX = Math.min(bounds.x, Math.max(-bounds.x, state.panX));
+  state.panY = Math.min(bounds.y, Math.max(-bounds.y, state.panY));
+}
+
+function panBy(deltaX, deltaY) {
+  state.panX -= deltaX;
+  state.panY -= deltaY;
+  clampPan();
+  applyZoomUi();
+}
+
+function canPan() {
+  const bounds = panBounds();
+  return bounds.x > 1 || bounds.y > 1;
 }
 
 function selectImage(index) {
   if (!state.images.length) return;
   state.index = (index + state.images.length) % state.images.length;
   state.zoom = 1;
+  resetPan();
   renderThumbs();
   renderViewer();
+  if (els.mainImage.complete) fitImageToStage();
   if (state.images.length) closePanels();
 }
 
@@ -242,7 +309,9 @@ function rotate(delta) {
   const image = activeImage();
   if (!image) return;
   image.rotation = (image.rotation + delta + 360) % 360;
+  resetPan();
   renderViewer();
+  fitImageToStage();
 }
 
 async function imageToCanvas(image) {
@@ -467,7 +536,7 @@ function bindEvents() {
   els.scrim.addEventListener("click", closePanels);
   els.rotateLeftBtn.addEventListener("click", () => rotate(-90));
   els.rotateRightBtn.addEventListener("click", () => rotate(90));
-  els.fitBtn.addEventListener("click", () => setZoom(1));
+  els.fitBtn.addEventListener("click", fitImageToStage);
   els.actualBtn.addEventListener("click", () => setZoom(1.8));
   els.zoomSlider.addEventListener("input", () => setZoom(Number(els.zoomSlider.value) / 100));
   els.downloadBtn.addEventListener("click", downloadActive);
@@ -491,25 +560,57 @@ function bindEvents() {
   els.saveCropBtn.addEventListener("click", saveCrop);
 
   els.stage.addEventListener("pointerdown", (event) => {
-    if (!state.cropMode || !activeImage()) return;
+    if (!activeImage()) return;
+    if (!state.cropMode && canPan()) {
+      state.panStart = { x: event.clientX, y: event.clientY };
+      state.panOrigin = { x: state.panX, y: state.panY };
+      els.stage.setPointerCapture(event.pointerId);
+      document.body.classList.add("panning");
+      return;
+    }
+    if (!state.cropMode) return;
     state.dragStart = stagePoint(event);
     els.stage.setPointerCapture(event.pointerId);
     drawCrop(state.dragStart, state.dragStart);
   });
   els.stage.addEventListener("pointermove", (event) => {
+    if (state.panStart && state.panOrigin) {
+      state.panX = state.panOrigin.x + event.clientX - state.panStart.x;
+      state.panY = state.panOrigin.y + event.clientY - state.panStart.y;
+      clampPan();
+      applyZoomUi();
+      return;
+    }
     if (!state.dragStart) return;
     drawCrop(state.dragStart, stagePoint(event));
   });
   els.stage.addEventListener("pointerup", () => {
     state.dragStart = null;
+    state.panStart = null;
+    state.panOrigin = null;
+    document.body.classList.remove("panning");
+  });
+  els.stage.addEventListener("pointercancel", () => {
+    state.dragStart = null;
+    state.panStart = null;
+    state.panOrigin = null;
+    document.body.classList.remove("panning");
   });
   els.stage.addEventListener("wheel", (event) => {
     if (!activeImage()) return;
     event.preventDefault();
-    const direction = event.deltaY > 0 ? -1 : 1;
-    const factor = direction > 0 ? 1.1 : 0.9;
-    setZoom(state.zoom * factor);
+    if (event.ctrlKey || event.metaKey) {
+      const direction = event.deltaY > 0 ? -1 : 1;
+      const factor = direction > 0 ? 1.1 : 0.9;
+      setZoom(state.zoom * factor);
+      return;
+    }
+    if (canPan()) panBy(event.deltaX, event.deltaY);
   }, { passive: false });
+  els.mainImage.addEventListener("load", fitImageToStage);
+  window.addEventListener("resize", () => {
+    if (activeImage() && Math.abs(state.zoom - state.fitZoom) < 0.02) fitImageToStage();
+  });
 
   window.addEventListener("keydown", (event) => {
     if (event.target instanceof HTMLInputElement) return;
