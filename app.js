@@ -167,6 +167,7 @@ function renderViewer() {
   els.mainImage.alt = image?.name ?? "";
   state.rotation = image?.rotation ?? 0;
   els.mainImage.style.setProperty("--rotation", `${state.rotation}deg`);
+  applyFitSize();
   applyZoomUi();
   els.prevBtn.disabled = state.images.length < 2;
   els.nextBtn.disabled = state.images.length < 2;
@@ -200,16 +201,29 @@ function applyZoomUi() {
 function calculateFitZoom() {
   const image = activeImage();
   if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) return 1;
-  const stageRect = els.stage.getBoundingClientRect();
-  const availableWidth = Math.max(80, stageRect.width - 24);
-  const availableHeight = Math.max(80, stageRect.height - 24);
-  const rotated = image.rotation % 180 !== 0;
-  const imageWidth = rotated ? els.mainImage.naturalHeight : els.mainImage.naturalWidth;
-  const imageHeight = rotated ? els.mainImage.naturalWidth : els.mainImage.naturalHeight;
-  const baseFit = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
-  const cssFit = Math.min(availableWidth / imageWidth, availableHeight / imageHeight, 1);
-  state.fitZoom = Math.min(maxZoom, Math.max(minZoom, baseFit / cssFit));
+  applyFitSize();
+  state.fitZoom = 1;
   return state.fitZoom;
+}
+
+function applyFitSize() {
+  const image = activeImage();
+  if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) {
+    els.mainImage.style.removeProperty("--fit-width");
+    els.mainImage.style.removeProperty("--fit-height");
+    return;
+  }
+  const stageRect = els.stage.getBoundingClientRect();
+  const availableWidth = Math.max(80, stageRect.width);
+  const availableHeight = Math.max(80, stageRect.height);
+  const rotated = image.rotation % 180 !== 0;
+  const naturalWidth = els.mainImage.naturalWidth;
+  const naturalHeight = els.mainImage.naturalHeight;
+  const fitScale = rotated
+    ? Math.min(availableWidth / naturalHeight, availableHeight / naturalWidth)
+    : Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight);
+  els.mainImage.style.setProperty("--fit-width", `${Math.max(1, naturalWidth * fitScale)}px`);
+  els.mainImage.style.setProperty("--fit-height", `${Math.max(1, naturalHeight * fitScale)}px`);
 }
 
 function fitImageToStage() {
