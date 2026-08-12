@@ -1,0 +1,29 @@
+{
+  "name": "EasyImage",
+  "short_name": "EasyImage",
+  "description": "צפייה, עריכה, ארגון והדפסה של תמונות באופן מקומי ופרטי.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#15181d",
+  "theme_color": "#15181d",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "image/png": [".png"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/webp": [".webp"],
+        "image/gif": [".gif"],
+        "image/bmp": [".bmp"],
+        "image/avif": [".avif"]
+      }
+    }
+  ],
+  "categories": ["photo", "productivity", "utilities"]
+}
