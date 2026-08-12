@@ -3,7 +3,9 @@ const BASE = '/easyimage/';
 const ASSETS = [
   BASE,
   `${BASE}index.html`,
+  `${BASE}manifest.json`,
   `${BASE}manifest.webmanifest`,
+  `${BASE}site.webmanifest`,
   `${BASE}icons/icon.svg`,
   `${BASE}icons/icon-192.png`,
   `${BASE}icons/icon-512.png`,
