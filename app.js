@@ -660,6 +660,12 @@ updatePanels();
 
 if ("serviceWorker" in navigator) {
   const serviceWorkerUrl = new URL("./sw.js", document.baseURI);
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const reloadKey = "pwa-service-worker-reload";
+    if (sessionStorage.getItem(reloadKey)) return;
+    sessionStorage.setItem(reloadKey, "1");
+    window.location.reload();
+  });
   navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./" }).catch((error) => {
     console.error("Service worker registration failed:", error);
   });

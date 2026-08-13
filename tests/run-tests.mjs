@@ -31,4 +31,13 @@ for (const feature of ["showDirectoryPicker", "launchQueue", "ClipboardItem", "b
   if (!app.includes(feature)) throw new Error(`Missing expected feature: ${feature}`);
 }
 
+const serviceWorker = await readFile("sw.js", "utf8");
+const cachedAssets = serviceWorker.match(/const ASSETS = \[([\s\S]*?)\];/)?.[1] ?? "";
+if (cachedAssets.includes("manifest.json")) {
+  throw new Error("Blocked network manifest must not be part of the install cache");
+}
+for (const feature of ["MANIFEST_PATH", "application/manifest+json", "new Response(JSON.stringify(MANIFEST)"]) {
+  if (!serviceWorker.includes(feature)) throw new Error(`Missing synthetic manifest feature: ${feature}`);
+}
+
 console.log("PWA checks passed");
