@@ -4,7 +4,7 @@ const files = [
   "index.html",
   "app.js",
   "styles.css",
-  "manifest.json",
+  "manifest.webmanifest",
   "sw.js",
   "README.md",
 ];
