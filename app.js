@@ -659,7 +659,10 @@ renderViewer();
 updatePanels();
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  const serviceWorkerUrl = new URL("./sw.js", document.baseURI);
+  navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./" }).catch((error) => {
+    console.error("Service worker registration failed:", error);
+  });
 }
 
 if ("launchQueue" in window) {

@@ -16,6 +16,9 @@ for (const file of requiredFiles) {
 
 const manifest = JSON.parse(await readFile("manifest.webmanifest", "utf8"));
 if (manifest.display !== "standalone") throw new Error("PWA display must be standalone");
+if (manifest.id !== ".") throw new Error("PWA id must stay relative for subpath deployments");
+if (manifest.start_url !== ".") throw new Error("PWA start_url must stay relative for subpath deployments");
+if (manifest.scope !== ".") throw new Error("PWA scope must stay relative for subpath deployments");
 if (!manifest.file_handlers?.length) throw new Error("Missing image file handlers");
 
 const html = await readFile("index.html", "utf8");

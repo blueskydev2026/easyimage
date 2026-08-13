@@ -2,7 +2,7 @@
   "name": "גלריה זורמת",
   "short_name": "גלריה",
   "description": "ניהול וצפייה נוחה בתמונות מהמחשב",
-  "id": "/",
+  "id": ".",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
