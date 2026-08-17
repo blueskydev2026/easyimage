@@ -217,12 +217,6 @@ h1 {
   transform-origin: center center;
   transition: transform .18s ease;
   user-select: none;
-  cursor: grab;
-}
-
-.panning #mainImage {
-  cursor: grabbing;
-  transition: none;
 }
 
 .stage.has-image #mainImage { display: block; }

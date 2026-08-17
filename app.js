@@ -9,8 +9,6 @@ const state = {
   fitZoom: 1,
   panX: 0,
   panY: 0,
-  panStart: null,
-  panOrigin: null,
   print: {
     orientation: "portrait",
     mode: "normal",
@@ -253,36 +251,11 @@ function fitImageToStage() {
 function resetPan() {
   state.panX = 0;
   state.panY = 0;
-  state.panStart = null;
-  state.panOrigin = null;
-}
-
-function panBounds() {
-  const image = activeImage();
-  if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) return { x: 0, y: 0 };
-  const stageRect = els.stage.getBoundingClientRect();
-  const imageRect = els.mainImage.getBoundingClientRect();
-  const overflowX = Math.max(0, imageRect.width - stageRect.width);
-  const overflowY = Math.max(0, imageRect.height - stageRect.height);
-  return { x: overflowX / 2, y: overflowY / 2 };
 }
 
 function clampPan() {
-  const bounds = panBounds();
-  state.panX = Math.min(bounds.x, Math.max(-bounds.x, state.panX));
-  state.panY = Math.min(bounds.y, Math.max(-bounds.y, state.panY));
-}
-
-function panBy(deltaX, deltaY) {
-  state.panX -= deltaX;
-  state.panY -= deltaY;
-  clampPan();
-  applyZoomUi();
-}
-
-function canPan() {
-  const bounds = panBounds();
-  return bounds.x > 1 || bounds.y > 1;
+  state.panX = 0;
+  state.panY = 0;
 }
 
 function selectImage(index) {
@@ -715,6 +688,30 @@ function stagePoint(event) {
   };
 }
 
+function imageStageBounds() {
+  const stageRect = els.stage.getBoundingClientRect();
+  const imgRect = els.mainImage.getBoundingClientRect();
+  return {
+    left: Math.max(0, imgRect.left - stageRect.left),
+    top: Math.max(0, imgRect.top - stageRect.top),
+    right: Math.min(stageRect.width, imgRect.right - stageRect.left),
+    bottom: Math.min(stageRect.height, imgRect.bottom - stageRect.top),
+  };
+}
+
+function cropPoint(event, requireInside = false) {
+  const point = stagePoint(event);
+  const bounds = imageStageBounds();
+  if (bounds.right <= bounds.left || bounds.bottom <= bounds.top) return null;
+  const inside = point.x >= bounds.left && point.x <= bounds.right
+    && point.y >= bounds.top && point.y <= bounds.bottom;
+  if (requireInside && !inside) return null;
+  return {
+    x: Math.max(bounds.left, Math.min(point.x, bounds.right)),
+    y: Math.max(bounds.top, Math.min(point.y, bounds.bottom)),
+  };
+}
+
 function drawCrop(a, b) {
   const left = Math.min(a.x, b.x);
   const top = Math.min(a.y, b.y);
@@ -845,40 +842,23 @@ function bindEvents() {
 
   els.stage.addEventListener("pointerdown", (event) => {
     if (!activeImage()) return;
-    if (!state.cropMode && canPan()) {
-      state.panStart = { x: event.clientX, y: event.clientY };
-      state.panOrigin = { x: state.panX, y: state.panY };
-      els.stage.setPointerCapture(event.pointerId);
-      document.body.classList.add("panning");
-      return;
-    }
     if (!state.cropMode) return;
-    state.dragStart = stagePoint(event);
+    const point = cropPoint(event, true);
+    if (!point) return;
+    state.dragStart = point;
     els.stage.setPointerCapture(event.pointerId);
     drawCrop(state.dragStart, state.dragStart);
   });
   els.stage.addEventListener("pointermove", (event) => {
-    if (state.panStart && state.panOrigin) {
-      state.panX = state.panOrigin.x + event.clientX - state.panStart.x;
-      state.panY = state.panOrigin.y + event.clientY - state.panStart.y;
-      clampPan();
-      applyZoomUi();
-      return;
-    }
     if (!state.dragStart) return;
-    drawCrop(state.dragStart, stagePoint(event));
+    const point = cropPoint(event);
+    if (point) drawCrop(state.dragStart, point);
   });
   els.stage.addEventListener("pointerup", () => {
     state.dragStart = null;
-    state.panStart = null;
-    state.panOrigin = null;
-    document.body.classList.remove("panning");
   });
   els.stage.addEventListener("pointercancel", () => {
     state.dragStart = null;
-    state.panStart = null;
-    state.panOrigin = null;
-    document.body.classList.remove("panning");
   });
   els.stage.addEventListener("wheel", (event) => {
     if (!activeImage()) return;
@@ -889,7 +869,6 @@ function bindEvents() {
       setZoom(state.zoom * factor);
       return;
     }
-    if (canPan()) panBy(event.deltaX, event.deltaY);
   }, { passive: false });
   els.mainImage.addEventListener("load", fitImageToStage);
   window.addEventListener("resize", () => {
