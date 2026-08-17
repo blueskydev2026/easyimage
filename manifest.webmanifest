@@ -2,9 +2,9 @@
   "name": "גלריה זורמת",
   "short_name": "גלריה",
   "description": "ניהול וצפייה נוחה בתמונות מהמחשב",
-  "id": ".",
-  "start_url": ".",
-  "scope": ".",
+  "id": "/easyimage/",
+  "start_url": "/easyimage/",
+  "scope": "/easyimage/",
   "display": "standalone",
   "dir": "rtl",
   "lang": "he",
@@ -38,7 +38,7 @@
   ],
   "file_handlers": [
     {
-      "action": ".",
+      "action": "/easyimage/",
       "accept": {
         "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg"]
       }
