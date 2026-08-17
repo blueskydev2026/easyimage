@@ -54,15 +54,26 @@ if (!app.includes("@page { size: A4 ${options.orientation}; margin: 7mm; }")) {
 if (!app.includes("print-photo-frame") || !app.includes("object-fit: contain")) {
   throw new Error("Print photos must be constrained inside each cell without cropping or distortion");
 }
+if (!/\.print-photo-frame\s*{[\s\S]*?position:\s*relative;[\s\S]*?overflow:\s*hidden;/.test(app)
+  || !/\.print-cell img\s*{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/.test(app)) {
+  throw new Error("Print images must not expand grid cells through their intrinsic dimensions");
+}
+if (!app.includes(".mode-normal .print-cell { width: 100%; height: 100%; }")) {
+  throw new Error("Single-image print cells must stay inside the padded printable area");
+}
 if (!app.includes("image.decode")) {
   throw new Error("Print output must wait for images before printing");
 }
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+const packageLock = JSON.parse(await readFile("package-lock.json", "utf8"));
 const sw = await readFile("sw.js", "utf8");
 if (!html.includes('id="appVersion"')) throw new Error("Missing subtle app version in the UI");
 if (!app.includes(`const appVersion = "${packageJson.version}"`)) {
   throw new Error("App version constant must match package.json");
+}
+if (packageLock.version !== packageJson.version || packageLock.packages?.[""]?.version !== packageJson.version) {
+  throw new Error("Package lock version must match package.json");
 }
 if (!sw.includes(`flow-gallery-v${packageJson.version}`)) {
   throw new Error("Service worker cache must include the app version for installed-app updates");

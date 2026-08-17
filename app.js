@@ -77,7 +77,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.8";
+const appVersion = "2.0.10";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -699,31 +699,29 @@ async function printWithOptions(options) {
             min-height: 0;
             display: grid;
             place-items: center;
-            overflow: visible;
+            overflow: hidden;
             page-break-inside: avoid;
             break-inside: avoid;
           }
           .print-photo-frame {
+            position: relative;
             width: 100%;
             height: 100%;
             min-width: 0;
             min-height: 0;
-            display: grid;
-            place-items: center;
-            overflow: visible;
+            overflow: hidden;
           }
           .print-cell img {
-            max-width: 100%;
-            max-height: 100%;
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
             object-position: center center;
             display: block;
-            overflow: visible;
           }
           .mode-normal .print-sheet { --cols: 1; --rows: 1; }
-          .mode-normal .print-cell { width: var(--page-width); height: var(--page-height); }
+          .mode-normal .print-cell { width: 100%; height: 100%; }
           .mode-multi .print-sheet,
           .mode-repeat .print-sheet { --cols: var(--grid-cols); --rows: var(--grid-rows); }
           .mode-custom .print-sheet { --cols: 1; --rows: 1; place-items: center; }
