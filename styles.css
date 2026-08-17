@@ -510,7 +510,8 @@ input[type="range"] {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: rotate(var(--rotation, 0deg));
+  object-position: center center;
+  display: block;
 }
 
 .preview-slot span {

@@ -74,7 +74,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.1";
+const appVersion = "2.0.2";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -496,7 +496,6 @@ function renderPrintPreview(options = state.print) {
     const thumb = document.createElement("img");
     thumb.src = item.url;
     thumb.alt = "";
-    thumb.style.setProperty("--rotation", `${item.rotation}deg`);
     slot.append(thumb);
     if (options.mode === "multi") {
       const badge = document.createElement("span");
@@ -534,6 +533,12 @@ function customSizeCss(size) {
     a5: "width:14.8cm;height:21cm;",
     quarter: "width:50%;height:50%;",
   }[size] ?? "width:100%;height:100%;";
+}
+
+function pageSizeStyle(orientation) {
+  return orientation === "landscape"
+    ? "--page-width:297mm;--page-height:210mm;"
+    : "--page-width:210mm;--page-height:297mm;";
 }
 
 function openPrintOptions() {
@@ -596,6 +601,7 @@ async function printWithOptions(options) {
           <img src="${image.src}" alt="${escapeHtml(image.name)}">
         </figure>
       `).join("")}
+      ${Array.from({ length: gridCount - sheetItems.length }, () => "<figure class=\"print-cell empty\"></figure>").join("")}
     </main>
   `).join("");
 
@@ -607,11 +613,17 @@ async function printWithOptions(options) {
         <style>
           @page { size: A4 ${options.orientation}; margin: 0; }
           * { box-sizing: border-box; }
-          html, body { margin: 0; background: #fff; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: var(--page-width);
+            min-height: var(--page-height);
+            background: #fff;
+          }
           body { font-family: Arial, sans-serif; }
           .print-sheet {
-            width: 100vw;
-            height: 100vh;
+            width: var(--page-width);
+            height: var(--page-height);
             display: grid;
             grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
             grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr));
@@ -622,10 +634,13 @@ async function printWithOptions(options) {
           .print-cell {
             margin: 0;
             padding: 0;
+            min-width: 0;
+            min-height: 0;
             display: grid;
             place-items: center;
             overflow: hidden;
             page-break-inside: avoid;
+            break-inside: avoid;
           }
           .print-cell img {
             max-width: 100%;
@@ -633,20 +648,21 @@ async function printWithOptions(options) {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            object-position: center center;
             display: block;
           }
-          .mode-normal .print-sheet { --cols: 1; --rows: 1; height: 100vh; }
-          .mode-normal .print-cell { width: 100vw; height: 100vh; }
+          .mode-normal .print-sheet { --cols: 1; --rows: 1; }
+          .mode-normal .print-cell { width: var(--page-width); height: var(--page-height); }
           .mode-multi .print-sheet,
           .mode-repeat .print-sheet { --cols: var(--grid-cols); --rows: var(--grid-rows); }
-          .mode-custom .print-sheet { --cols: 1; --rows: 1; height: 100vh; place-items: center; }
+          .mode-custom .print-sheet { --cols: 1; --rows: 1; place-items: center; }
           .mode-custom .print-cell { ${customStyle} }
           @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
         </style>
       </head>
-      <body class="mode-${options.mode}" style="${gridStyle(gridCount, options.orientation)}">
+      <body class="mode-${options.mode}" style="${pageSizeStyle(options.orientation)}${gridStyle(gridCount, options.orientation)}">
         ${sheets}
       </body>
     </html>
