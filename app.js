@@ -69,10 +69,12 @@ const els = {
   batchStart: document.querySelector("#batchStart"),
   batchRenameBtn: document.querySelector("#batchRenameBtn"),
   statusLine: document.querySelector("#statusLine"),
+  appVersion: document.querySelector("#appVersion"),
 };
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
+const appVersion = "2.0.1";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -794,6 +796,7 @@ function openDroppedItems(event) {
 }
 
 function bindEvents() {
+  els.appVersion.textContent = `v${appVersion}`;
   els.openFilesBtn.addEventListener("click", () => els.filePicker.click());
   els.emptyOpenFilesBtn.addEventListener("click", () => els.filePicker.click());
   els.filePicker.addEventListener("change", (event) => openFiles(event.target.files));

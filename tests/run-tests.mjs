@@ -30,5 +30,18 @@ const app = await readFile("app.js", "utf8");
 for (const feature of ["showDirectoryPicker", "launchQueue", "ClipboardItem", "beforeinstallprompt"]) {
   if (!app.includes(feature)) throw new Error(`Missing expected feature: ${feature}`);
 }
+if (app.includes("panStart") || app.includes("panOrigin")) {
+  throw new Error("Image drag-to-pan should stay disabled");
+}
+
+const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+const sw = await readFile("sw.js", "utf8");
+if (!html.includes('id="appVersion"')) throw new Error("Missing subtle app version in the UI");
+if (!app.includes(`const appVersion = "${packageJson.version}"`)) {
+  throw new Error("App version constant must match package.json");
+}
+if (!sw.includes(`flow-gallery-v${packageJson.version}`)) {
+  throw new Error("Service worker cache must include the app version for installed-app updates");
+}
 
 console.log("PWA checks passed");
