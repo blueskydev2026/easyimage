@@ -77,7 +77,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.6";
+const appVersion = "2.0.7";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -932,9 +932,15 @@ function bindEvents() {
   });
   els.confirmCropBtn.addEventListener("click", saveCrop);
   els.cancelCropBtn.addEventListener("click", () => setCropMode(false));
+  ["pointerdown", "pointermove", "pointerup", "click"].forEach((type) => {
+    els.cropActions.addEventListener(type, (event) => {
+      event.stopPropagation();
+    });
+  });
 
   els.stage.addEventListener("pointerdown", (event) => {
     if (!activeImage()) return;
+    if (event.target.closest?.("#cropActions")) return;
     if (!state.cropMode) {
       if (event.button !== 0) return;
       event.preventDefault();

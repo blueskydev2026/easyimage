@@ -45,6 +45,9 @@ if (!html.includes('id="confirmCropBtn"') || !html.includes('id="cancelCropBtn"'
 if (!app.includes("saveNewFileBlob(blob, croppedFileName(image.name), image.dirHandle)")) {
   throw new Error("Crop save must create a new file instead of replacing the active image");
 }
+if (!app.includes("event.stopPropagation()") || !app.includes('event.target.closest?.("#cropActions")')) {
+  throw new Error("Crop action buttons must not start a new crop selection");
+}
 if (!app.includes("@page { size: A4 ${options.orientation}; margin: 7mm; }")) {
   throw new Error("Print output must use a safe page margin to avoid clipped photos");
 }
