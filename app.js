@@ -11,6 +11,13 @@ const state = {
   panY: 0,
   panStart: null,
   panOrigin: null,
+  print: {
+    orientation: "portrait",
+    mode: "normal",
+    multiLayout: 4,
+    repeatLayout: 4,
+    customSize: "10x15",
+  },
 };
 
 const els = {
@@ -49,6 +56,17 @@ const els = {
   copyBtn: document.querySelector("#copyBtn"),
   downloadBtn: document.querySelector("#downloadBtn"),
   printBtn: document.querySelector("#printBtn"),
+  quickPrintBtn: document.querySelector("#quickPrintBtn"),
+  printOptionsBtn: document.querySelector("#printOptionsBtn"),
+  sidePrintOptionsBtn: document.querySelector("#sidePrintOptionsBtn"),
+  printDialog: document.querySelector("#printDialog"),
+  advancedPrintBtn: document.querySelector("#advancedPrintBtn"),
+  printMode: document.querySelector("#printMode"),
+  printMultiLayout: document.querySelector("#printMultiLayout"),
+  printRepeatLayout: document.querySelector("#printRepeatLayout"),
+  printCustomSize: document.querySelector("#printCustomSize"),
+  printPreview: document.querySelector("#printPreview"),
+  printSummary: document.querySelector("#printSummary"),
   batchPattern: document.querySelector("#batchPattern"),
   batchStart: document.querySelector("#batchStart"),
   batchRenameBtn: document.querySelector("#batchRenameBtn"),
@@ -173,13 +191,14 @@ function renderViewer() {
   els.nextBtn.disabled = state.images.length < 2;
   setToolDisabled(!image);
   resetCrop();
+  renderPrintPreview();
 }
 
 function setToolDisabled(disabled) {
   [
     els.rotateLeftBtn, els.rotateRightBtn, els.fitBtn, els.actualBtn, els.cropModeBtn,
     els.saveCropBtn, els.renameBtn, els.copyBtn, els.downloadBtn, els.printBtn,
-    els.batchRenameBtn,
+    els.quickPrintBtn, els.printOptionsBtn, els.sidePrintOptionsBtn, els.batchRenameBtn,
   ].forEach((button) => { button.disabled = disabled; });
   els.zoomSlider.disabled = disabled;
 }
@@ -424,21 +443,218 @@ async function renameOnDisk(image, newName) {
   }
 }
 
-function printActive() {
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function currentPrintOptions(overrides = {}) {
+  return { ...state.print, ...overrides };
+}
+
+function readPrintOptions() {
+  const orientationInput = document.querySelector("input[name='printOrientation']:checked");
+  state.print.orientation = orientationInput?.value ?? "portrait";
+  state.print.mode = els.printMode.value;
+  state.print.multiLayout = Number(els.printMultiLayout.value);
+  state.print.repeatLayout = Number(els.printRepeatLayout.value);
+  state.print.customSize = els.printCustomSize.value;
+  return currentPrintOptions();
+}
+
+function writePrintOptions(options = state.print) {
+  const orientation = document.querySelector(`input[name='printOrientation'][value='${options.orientation}']`);
+  if (orientation) orientation.checked = true;
+  els.printMode.value = options.mode;
+  els.printMultiLayout.value = String(options.multiLayout);
+  els.printRepeatLayout.value = String(options.repeatLayout);
+  els.printCustomSize.value = options.customSize;
+}
+
+function printItemsForOptions(options) {
   const image = activeImage();
-  if (!image) return;
-  const printWindow = window.open("", "_blank", "popup,width=900,height=700");
+  if (!image) return [];
+  if (options.mode === "multi") return state.images;
+  if (options.mode === "repeat") {
+    return Array.from({ length: options.repeatLayout }, () => image);
+  }
+  return [image];
+}
+
+function countForOptions(options) {
+  if (options.mode === "multi") return options.multiLayout;
+  if (options.mode === "repeat") return options.repeatLayout;
+  return 1;
+}
+
+function updatePrintControls() {
+  const options = readPrintOptions();
+  document.querySelectorAll("[data-print-setting]").forEach((setting) => {
+    setting.hidden = setting.dataset.printSetting !== options.mode;
+  });
+  renderPrintPreview(options);
+}
+
+function renderPrintPreview(options = state.print) {
+  const image = activeImage();
+  els.printPreview.replaceChildren();
+  els.printPreview.className = `print-preview ${options.orientation} mode-${options.mode}`;
+  if (!image) {
+    els.printSummary.textContent = "בחרו תמונה כדי לראות תצוגה מקדימה.";
+    return;
+  }
+
+  const page = document.createElement("div");
+  page.className = `preview-page slots-${countForOptions(options)} custom-${options.customSize}`;
+  const items = printItemsForOptions(options).slice(0, countForOptions(options));
+  items.forEach((item, index) => {
+    const slot = document.createElement("div");
+    slot.className = "preview-slot";
+    const thumb = document.createElement("img");
+    thumb.src = item.url;
+    thumb.alt = "";
+    thumb.style.setProperty("--rotation", `${item.rotation}deg`);
+    slot.append(thumb);
+    if (options.mode === "multi") {
+      const badge = document.createElement("span");
+      badge.textContent = String(index + 1);
+      slot.append(badge);
+    }
+    page.append(slot);
+  });
+  els.printPreview.append(page);
+
+  const summaries = {
+    normal: "תמונה אחת מותאמת לדף מלא ככל האפשר.",
+    multi: `${Math.min(state.images.length, options.multiLayout)} מתוך ${state.images.length} תמונות בעמוד הראשון, והשאר ימשיכו לעמודים הבאים.`,
+    repeat: `${options.repeatLayout} עותקים של התמונה הפעילה בכל עמוד.`,
+    custom: `התמונה הפעילה תודפס בגודל ${labelForCustomSize(options.customSize)} במרכז הדף.`,
+  };
+  els.printSummary.textContent = summaries[options.mode];
+}
+
+function labelForCustomSize(size) {
+  return {
+    half: "חצי עמוד",
+    "10x15": "10×15 ס״מ",
+    "13x18": "13×18 ס״מ",
+    a5: "A5",
+    quarter: "רבע עמוד",
+  }[size] ?? size;
+}
+
+function customSizeCss(size) {
+  return {
+    half: "width:100%;height:50%;",
+    "10x15": "width:10cm;height:15cm;",
+    "13x18": "width:13cm;height:18cm;",
+    a5: "width:14.8cm;height:21cm;",
+    quarter: "width:50%;height:50%;",
+  }[size] ?? "width:100%;height:100%;";
+}
+
+function openPrintOptions() {
+  if (!activeImage()) return;
+  writePrintOptions();
+  updatePrintControls();
+  if (typeof els.printDialog.showModal === "function") {
+    els.printDialog.showModal();
+  } else {
+    setStatus("הדפדפן לא תומך בחלונית אפשרויות הדפסה.");
+  }
+}
+
+function printActive() {
+  printWithOptions(currentPrintOptions({ mode: "normal" }));
+}
+
+function printAdvanced() {
+  const options = readPrintOptions();
+  printWithOptions(options);
+}
+
+function printWithOptions(options) {
+  const items = printItemsForOptions(options);
+  if (!items.length) return;
+  const printWindow = window.open("", "_blank", "popup,width=980,height=760");
   if (!printWindow) return setStatus("הדפדפן חסם את חלון ההדפסה");
+  const title = options.mode === "multi" ? "הדפסת תמונות" : items[0].name;
+  const cells = items.map((image) => `
+    <figure class="print-cell">
+      <img src="${image.url}" alt="" style="--rotation:${image.rotation}deg">
+    </figure>
+  `).join("");
+  const customStyle = options.mode === "custom" ? customSizeCss(options.customSize) : "";
+  const gridCount = countForOptions(options);
+
   printWindow.document.write(`
-    <!doctype html><html lang="he" dir="rtl"><head><title>${image.name}</title>
-    <style>body{margin:0;background:#fff;display:grid;place-items:center;min-height:100vh}img{max-width:96vw;max-height:96vh;object-fit:contain;transform:rotate(${image.rotation}deg)}</style>
-    </head><body><img src="${image.url}" alt=""></body></html>
+    <!doctype html>
+    <html lang="he" dir="rtl">
+      <head>
+        <title>${escapeHtml(title)}</title>
+        <style>
+          @page { size: A4 ${options.orientation}; margin: 0; }
+          * { box-sizing: border-box; }
+          html, body { margin: 0; background: #fff; }
+          body { font-family: Arial, sans-serif; }
+          .print-sheet {
+            width: 100vw;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+            grid-auto-rows: calc(100vh / var(--rows, 1));
+            break-after: page;
+          }
+          .print-cell {
+            margin: 0;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            page-break-inside: avoid;
+          }
+          .print-cell img {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: rotate(var(--rotation, 0deg));
+            transform-origin: center;
+          }
+          .mode-normal .print-sheet { --cols: 1; --rows: 1; height: 100vh; }
+          .mode-normal .print-cell { width: 100vw; height: 100vh; }
+          .mode-multi .print-sheet,
+          .mode-repeat .print-sheet { --cols: var(--grid-cols); --rows: var(--grid-rows); }
+          .mode-custom .print-sheet { --cols: 1; --rows: 1; height: 100vh; place-items: center; }
+          .mode-custom .print-cell { ${customStyle} }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body class="mode-${options.mode}" style="${gridStyle(gridCount)}">
+        <main class="print-sheet">${cells}</main>
+      </body>
+    </html>
   `);
   printWindow.document.close();
   printWindow.addEventListener("load", () => {
     printWindow.focus();
     printWindow.print();
   });
+  setStatus("נשלח לחלון ההדפסה. בחירת המדפסת בפועל מנוהלת על ידי הדפדפן.");
+}
+
+function gridStyle(count) {
+  const columns = count === 2 ? 1 : count === 6 ? 2 : Math.ceil(Math.sqrt(count));
+  const rows = Math.ceil(count / columns);
+  return `--grid-cols:${columns};--grid-rows:${rows};`;
 }
 
 function resetCrop() {
@@ -558,6 +774,16 @@ function bindEvents() {
   els.renameBtn.addEventListener("click", renameActive);
   els.batchRenameBtn.addEventListener("click", batchRename);
   els.printBtn.addEventListener("click", printActive);
+  els.quickPrintBtn.addEventListener("click", printActive);
+  els.printOptionsBtn.addEventListener("click", openPrintOptions);
+  els.sidePrintOptionsBtn.addEventListener("click", openPrintOptions);
+  els.advancedPrintBtn.addEventListener("click", printAdvanced);
+  document.querySelectorAll("input[name='printOrientation']").forEach((input) => {
+    input.addEventListener("change", updatePrintControls);
+  });
+  [els.printMode, els.printMultiLayout, els.printRepeatLayout, els.printCustomSize].forEach((input) => {
+    input.addEventListener("change", updatePrintControls);
+  });
   els.installBtn.addEventListener("click", async () => {
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
@@ -628,6 +854,7 @@ function bindEvents() {
 
   window.addEventListener("keydown", (event) => {
     if (event.target instanceof HTMLInputElement) return;
+    if (event.target instanceof HTMLSelectElement) return;
     if (event.key === "ArrowLeft") selectImage(state.index + 1);
     if (event.key === "ArrowRight") selectImage(state.index - 1);
     if (event.key === "Escape") closePanels();

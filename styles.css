@@ -24,7 +24,7 @@ body {
   color: var(--ink);
 }
 
-button, input {
+button, input, select {
   font: inherit;
 }
 
@@ -321,7 +321,7 @@ h1 {
   font-size: .9rem;
 }
 
-input {
+input, select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -329,6 +329,15 @@ input {
   color: var(--ink);
   min-height: 42px;
   padding: 0 12px;
+}
+
+select option {
+  background: #172033;
+  color: var(--ink);
+}
+
+select {
+  cursor: pointer;
 }
 
 input[type="range"] {
@@ -353,6 +362,211 @@ input[type="range"] {
   padding: 8px 10px;
   border-radius: 8px;
   background: rgba(45, 212, 191, .09);
+}
+
+.print-dialog {
+  width: min(94vw, 880px);
+  max-height: min(92vh, 760px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.print-dialog::backdrop {
+  background: rgba(2, 6, 23, .64);
+  backdrop-filter: blur(3px);
+}
+
+.print-panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.print-head,
+.print-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.print-head p,
+.print-preview-wrap p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.print-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.print-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segmented legend {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: .9rem;
+  margin-bottom: 6px;
+}
+
+.segmented label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.segmented input {
+  width: auto;
+  min-height: 0;
+  accent-color: var(--accent);
+}
+
+.print-setting[hidden] {
+  display: none;
+}
+
+.print-preview-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.print-preview {
+  width: min(100%, 390px);
+  height: 430px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.045) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,.045) 25%, transparent 25%),
+    rgba(11, 16, 32, .72);
+  background-size: 20px 20px;
+  padding: 18px;
+}
+
+.preview-page {
+  display: grid;
+  gap: 7px;
+  width: 72%;
+  aspect-ratio: 1 / 1.414;
+  padding: 10px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, .28);
+}
+
+.print-preview.landscape .preview-page {
+  width: 92%;
+  aspect-ratio: 1.414 / 1;
+}
+
+.preview-page.slots-1 {
+  grid-template-columns: 1fr;
+}
+
+.preview-page.slots-2 {
+  grid-template-columns: 1fr;
+}
+
+.preview-page.slots-4,
+.preview-page.slots-6 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.preview-page.slots-9 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.preview-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #d7dde7;
+  background: #f8fafc;
+}
+
+.preview-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: rotate(var(--rotation, 0deg));
+}
+
+.preview-slot span {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: 4px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .82);
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.mode-custom .preview-page {
+  place-items: center;
+}
+
+.mode-custom .preview-slot {
+  width: 74%;
+  height: 74%;
+}
+
+.mode-custom .preview-page.custom-half .preview-slot {
+  width: 100%;
+  height: 50%;
+}
+
+.mode-custom .preview-page.custom-quarter .preview-slot {
+  width: 50%;
+  height: 50%;
+}
+
+.mode-custom .preview-page.custom-10x15 .preview-slot {
+  width: 50%;
+  aspect-ratio: 10 / 15;
+}
+
+.mode-custom .preview-page.custom-13x18 .preview-slot {
+  width: 58%;
+  aspect-ratio: 13 / 18;
+}
+
+.mode-custom .preview-page.custom-a5 .preview-slot {
+  width: 70%;
+  aspect-ratio: 1 / 1.414;
 }
 
 .crop-box {
@@ -413,4 +627,6 @@ input[type="range"] {
   }
   .scrim { inset-block-start: 118px; }
   .details { inset-block-start: 118px; }
+  .print-layout { grid-template-columns: 1fr; }
+  .print-preview { height: 310px; }
 }

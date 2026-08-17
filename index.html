@@ -24,6 +24,8 @@
         <div class="top-actions">
           <button class="primary-btn" id="openFilesBtn" type="button">פתח תמונות</button>
           <button class="soft-btn" id="openFolderBtn" type="button">פתח תיקייה</button>
+          <button class="soft-btn" id="quickPrintBtn" type="button">הדפסה מהירה</button>
+          <button class="soft-btn" id="printOptionsBtn" type="button">אפשרויות הדפסה</button>
           <button class="soft-btn install-btn" id="installBtn" type="button" hidden>התקן</button>
           <button class="icon-btn" id="toggleFilmstripBtn" type="button" aria-label="פתח רשימת תמונות" title="תמונות">▦</button>
           <button class="icon-btn" id="toggleToolsBtn" type="button" aria-label="פתח סרגל פעולות" title="פעולות">☰</button>
@@ -102,7 +104,8 @@
               <button id="renameBtn" type="button">שנה שם</button>
               <button id="copyBtn" type="button">העתק תמונה</button>
               <button id="downloadBtn" type="button">שמור עותק</button>
-              <button id="printBtn" type="button">הדפס</button>
+              <button id="printBtn" type="button">הדפסה מהירה</button>
+              <button id="sidePrintOptionsBtn" type="button">אפשרויות הדפסה</button>
             </div>
           </div>
 
@@ -124,6 +127,79 @@
       </section>
       <button class="scrim" id="scrim" type="button" aria-label="סגור סרגלים" hidden></button>
     </main>
+
+    <dialog class="print-dialog" id="printDialog" aria-labelledby="printDialogTitle">
+      <form method="dialog" class="print-panel">
+        <div class="print-head">
+          <div>
+            <h2 id="printDialogTitle">אפשרויות הדפסה</h2>
+            <p>בחרו פריסה, כיוון וגודל לפני שליחה להדפסה.</p>
+          </div>
+          <button class="icon-btn" id="closePrintDialogBtn" value="cancel" type="submit" aria-label="סגור">×</button>
+        </div>
+
+        <div class="print-layout">
+          <section class="print-controls" aria-label="הגדרות הדפסה">
+            <fieldset class="segmented">
+              <legend>כיוון הדף</legend>
+              <label><input type="radio" name="printOrientation" value="portrait" checked> אורך</label>
+              <label><input type="radio" name="printOrientation" value="landscape"> רוחב</label>
+            </fieldset>
+
+            <label class="field">
+              <span>פעולת הדפסה</span>
+              <select id="printMode">
+                <option value="normal">הדפסה רגילה</option>
+                <option value="multi">כמה תמונות בדף</option>
+                <option value="repeat">תמונה אחת מספר פעמים בדף</option>
+                <option value="custom">גודל מותאם</option>
+              </select>
+            </label>
+
+            <label class="field print-setting" data-print-setting="multi">
+              <span>כמות תמונות בדף</span>
+              <select id="printMultiLayout">
+                <option value="2">2 תמונות</option>
+                <option value="4" selected>4 תמונות</option>
+                <option value="6">6 תמונות</option>
+                <option value="9">9 תמונות</option>
+              </select>
+            </label>
+
+            <label class="field print-setting" data-print-setting="repeat">
+              <span>עותקים בדף</span>
+              <select id="printRepeatLayout">
+                <option value="2">2 עותקים</option>
+                <option value="4" selected>4 עותקים</option>
+                <option value="6">6 עותקים</option>
+                <option value="9">9 עותקים</option>
+              </select>
+            </label>
+
+            <label class="field print-setting" data-print-setting="custom">
+              <span>גודל תמונה</span>
+              <select id="printCustomSize">
+                <option value="half">חצי עמוד</option>
+                <option value="10x15" selected>10×15 ס"מ</option>
+                <option value="13x18">13×18 ס"מ</option>
+                <option value="a5">A5</option>
+                <option value="quarter">רבע עמוד</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="print-preview-wrap" aria-label="תצוגה מקדימה">
+            <div class="print-preview" id="printPreview"></div>
+            <p id="printSummary">תמונה אחת מותאמת לדף מלא.</p>
+          </section>
+        </div>
+
+        <div class="print-actions">
+          <button class="soft-btn" value="cancel" type="submit">ביטול</button>
+          <button class="primary-btn" id="advancedPrintBtn" value="default" type="button">הדפס</button>
+        </div>
+      </form>
+    </dialog>
 
     <input id="filePicker" type="file" accept="image/*" multiple hidden>
     <script src="./app.js" type="module"></script>
