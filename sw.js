@@ -1,4 +1,4 @@
-const CACHE = "flow-gallery-v2.0.9-no-crop-print";
+const CACHE = "flow-gallery-v2.0.8-print-fit";
 const ASSETS = [
   "./",
   "./index.html",

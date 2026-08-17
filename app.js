@@ -15,7 +15,6 @@ const state = {
     multiLayout: 4,
     repeatLayout: 4,
     customSize: "10x15",
-    noCrop: true,
   },
 };
 
@@ -63,7 +62,6 @@ const els = {
   sidePrintOptionsBtn: document.querySelector("#sidePrintOptionsBtn"),
   printDialog: document.querySelector("#printDialog"),
   advancedPrintBtn: document.querySelector("#advancedPrintBtn"),
-  printNoCrop: document.querySelector("#printNoCrop"),
   printMode: document.querySelector("#printMode"),
   printMultiLayout: document.querySelector("#printMultiLayout"),
   printRepeatLayout: document.querySelector("#printRepeatLayout"),
@@ -79,7 +77,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.9";
+const appVersion = "2.0.8";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -497,7 +495,6 @@ function readPrintOptions() {
   state.print.multiLayout = Number(els.printMultiLayout.value);
   state.print.repeatLayout = Number(els.printRepeatLayout.value);
   state.print.customSize = els.printCustomSize.value;
-  state.print.noCrop = els.printNoCrop.checked;
   return currentPrintOptions();
 }
 
@@ -508,7 +505,6 @@ function writePrintOptions(options = state.print) {
   els.printMultiLayout.value = String(options.multiLayout);
   els.printRepeatLayout.value = String(options.repeatLayout);
   els.printCustomSize.value = options.customSize;
-  els.printNoCrop.checked = options.noCrop !== false;
 }
 
 function printItemsForOptions(options) {
@@ -538,7 +534,7 @@ function updatePrintControls() {
 function renderPrintPreview(options = state.print) {
   const image = activeImage();
   els.printPreview.replaceChildren();
-  els.printPreview.className = `print-preview ${options.orientation} mode-${options.mode}${options.noCrop !== false ? " no-crop" : ""}`;
+  els.printPreview.className = `print-preview ${options.orientation} mode-${options.mode}`;
   if (!image) {
     els.printSummary.textContent = "בחרו תמונה כדי לראות תצוגה מקדימה.";
     return;
@@ -597,8 +593,8 @@ function customSizeCss(size) {
 
 function pageSizeStyle(orientation) {
   return orientation === "landscape"
-    ? "--page-width:277mm;--page-height:190mm;"
-    : "--page-width:190mm;--page-height:277mm;";
+    ? "--page-width:283mm;--page-height:196mm;"
+    : "--page-width:196mm;--page-height:283mm;";
 }
 
 function openPrintOptions() {
@@ -646,7 +642,6 @@ async function printWithOptions(options) {
   if (!printWindow) return setStatus("הדפדפן חסם את חלון ההדפסה");
   const title = options.mode === "multi" ? "הדפסת תמונות" : items[0].name;
   const customStyle = options.mode === "custom" ? customSizeCss(options.customSize) : "";
-  const fitClass = options.noCrop !== false ? "fit-no-crop" : "fit-standard";
   const gridCount = countForOptions(options);
   const sources = [];
   for (const image of items) {
@@ -718,21 +713,17 @@ async function printWithOptions(options) {
             overflow: visible;
           }
           .print-cell img {
-            max-width: calc(100% - 2mm);
-            max-height: calc(100% - 2mm);
-            width: auto;
-            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             object-position: center center;
             display: block;
             overflow: visible;
           }
-          .fit-standard .print-cell img {
-            max-width: 100%;
-            max-height: 100%;
-          }
           .mode-normal .print-sheet { --cols: 1; --rows: 1; }
-          .mode-normal .print-cell { width: 100%; height: 100%; }
+          .mode-normal .print-cell { width: var(--page-width); height: var(--page-height); }
           .mode-multi .print-sheet,
           .mode-repeat .print-sheet { --cols: var(--grid-cols); --rows: var(--grid-rows); }
           .mode-custom .print-sheet { --cols: 1; --rows: 1; place-items: center; }
@@ -742,7 +733,7 @@ async function printWithOptions(options) {
           }
         </style>
       </head>
-      <body class="mode-${options.mode} ${fitClass}" style="${pageSizeStyle(options.orientation)}${gridStyle(gridCount, options.orientation)}">
+      <body class="mode-${options.mode}" style="${pageSizeStyle(options.orientation)}${gridStyle(gridCount, options.orientation)}">
         ${sheets}
         <script>
           const images = [...document.images];
@@ -940,7 +931,7 @@ function bindEvents() {
   document.querySelectorAll("input[name='printOrientation']").forEach((input) => {
     input.addEventListener("change", updatePrintControls);
   });
-  [els.printNoCrop, els.printMode, els.printMultiLayout, els.printRepeatLayout, els.printCustomSize].forEach((input) => {
+  [els.printMode, els.printMultiLayout, els.printRepeatLayout, els.printCustomSize].forEach((input) => {
     input.addEventListener("change", updatePrintControls);
   });
   els.installBtn.addEventListener("click", async () => {
