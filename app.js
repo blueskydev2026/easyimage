@@ -49,7 +49,9 @@ const els = {
   zoomValue: document.querySelector("#zoomValue"),
   mainZoomControl: document.querySelector("#mainZoomControl"),
   cropModeBtn: document.querySelector("#cropModeBtn"),
-  saveCropBtn: document.querySelector("#saveCropBtn"),
+  cropActions: document.querySelector("#cropActions"),
+  confirmCropBtn: document.querySelector("#confirmCropBtn"),
+  cancelCropBtn: document.querySelector("#cancelCropBtn"),
   renameInput: document.querySelector("#renameInput"),
   renameBtn: document.querySelector("#renameBtn"),
   copyBtn: document.querySelector("#copyBtn"),
@@ -75,7 +77,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.5";
+const appVersion = "2.0.6";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -198,7 +200,7 @@ function renderViewer() {
 function setToolDisabled(disabled) {
   [
     els.rotateLeftBtn, els.rotateRightBtn, els.fitBtn, els.actualBtn, els.cropModeBtn,
-    els.saveCropBtn, els.renameBtn, els.copyBtn, els.downloadBtn, els.printBtn,
+    els.confirmCropBtn, els.cancelCropBtn, els.renameBtn, els.copyBtn, els.downloadBtn, els.printBtn,
     els.quickPrintBtn, els.printOptionsBtn, els.sidePrintOptionsBtn, els.batchRenameBtn,
   ].forEach((button) => { button.disabled = disabled; });
   els.zoomSlider.disabled = disabled;
@@ -376,6 +378,40 @@ function saveBlob(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+async function saveNewFileBlob(blob, name, dirHandle = null) {
+  if (dirHandle && "getFileHandle" in dirHandle) {
+    try {
+      const permission = await dirHandle.requestPermission?.({ mode: "readwrite" });
+      if (!permission || permission === "granted") {
+        const fileName = await uniqueFileName(dirHandle, name);
+        const handle = await dirHandle.getFileHandle(fileName, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return fileName;
+      }
+    } catch {
+      // Fall back to browser download when direct folder write is unavailable.
+    }
+  }
+  saveBlob(blob, name);
+  return name;
+}
+
+async function uniqueFileName(dirHandle, wantedName) {
+  const ext = extensionOf(wantedName);
+  const base = baseName(wantedName);
+  for (let index = 0; index < 1000; index += 1) {
+    const candidate = index ? `${base}-${index}${ext}` : wantedName;
+    try {
+      await dirHandle.getFileHandle(candidate);
+    } catch {
+      return candidate;
+    }
+  }
+  return `${base}-${Date.now()}${ext}`;
+}
+
 async function copyImage() {
   const image = activeImage();
   if (!image) return;
@@ -548,17 +584,17 @@ function labelForCustomSize(size) {
 function customSizeCss(size) {
   return {
     half: "width:100%;height:50%;",
-    "10x15": "width:10cm;height:15cm;",
-    "13x18": "width:13cm;height:18cm;",
-    a5: "width:14.8cm;height:21cm;",
+    "10x15": "width:min(10cm, 100%);height:min(15cm, 100%);",
+    "13x18": "width:min(13cm, 100%);height:min(18cm, 100%);",
+    a5: "width:min(14.8cm, 100%);height:min(21cm, 100%);",
     quarter: "width:50%;height:50%;",
   }[size] ?? "width:100%;height:100%;";
 }
 
 function pageSizeStyle(orientation) {
   return orientation === "landscape"
-    ? "--page-width:297mm;--page-height:210mm;"
-    : "--page-width:210mm;--page-height:297mm;";
+    ? "--page-width:283mm;--page-height:196mm;"
+    : "--page-width:196mm;--page-height:283mm;";
 }
 
 function openPrintOptions() {
@@ -631,13 +667,13 @@ async function printWithOptions(options) {
       <head>
         <title>${escapeHtml(title)}</title>
         <style>
-          @page { size: A4 ${options.orientation}; margin: 0; }
+          @page { size: A4 ${options.orientation}; margin: 7mm; }
           * { box-sizing: border-box; }
           html, body {
             margin: 0;
             padding: 0;
-            width: var(--page-width);
-            min-height: var(--page-height);
+            width: 100%;
+            min-height: 100%;
             background: #fff;
           }
           body { font-family: Arial, sans-serif; }
@@ -670,6 +706,7 @@ async function printWithOptions(options) {
             object-fit: contain;
             object-position: center center;
             display: block;
+            overflow: visible;
           }
           .mode-normal .print-sheet { --cols: 1; --rows: 1; }
           .mode-normal .print-cell { width: var(--page-width); height: var(--page-height); }
@@ -684,14 +721,24 @@ async function printWithOptions(options) {
       </head>
       <body class="mode-${options.mode}" style="${pageSizeStyle(options.orientation)}${gridStyle(gridCount, options.orientation)}">
         ${sheets}
+        <script>
+          const images = [...document.images];
+          Promise.all(images.map((image) => {
+            if (image.decode) return image.decode().catch(() => {});
+            if (image.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+              image.addEventListener("load", resolve, { once: true });
+              image.addEventListener("error", resolve, { once: true });
+            });
+          })).then(() => setTimeout(() => {
+            window.focus();
+            window.print();
+          }, 80));
+        </script>
       </body>
     </html>
   `);
   printWindow.document.close();
-  printWindow.addEventListener("load", () => {
-    printWindow.focus();
-    printWindow.print();
-  });
   setStatus("נשלח לחלון ההדפסה. בחירת המדפסת בפועל מנוהלת על ידי הדפדפן.");
 }
 
@@ -716,6 +763,14 @@ function resetCrop() {
   state.crop = null;
   state.dragStart = null;
   els.cropBox.hidden = true;
+  els.cropActions.hidden = true;
+}
+
+function setCropMode(active) {
+  state.cropMode = active;
+  document.body.classList.toggle("crop-active", active);
+  els.cropModeBtn.textContent = active ? "כבה חיתוך" : "הפעל חיתוך";
+  resetCrop();
 }
 
 function stagePoint(event) {
@@ -763,6 +818,7 @@ function drawCrop(a, b) {
     height: `${height}px`,
   });
   els.cropBox.hidden = width < 8 || height < 8;
+  els.cropActions.hidden = width < 8 || height < 8;
 }
 
 async function saveCrop() {
@@ -794,14 +850,14 @@ async function saveCrop() {
   target.height = Math.round(sh);
   target.getContext("2d").drawImage(source, sx, sy, sw, sh, 0, 0, target.width, target.height);
   target.toBlob(async (blob) => {
-    const saved = await writeBlobToActiveFile(blob);
-    if (saved) {
-      setStatus("החיתוך נשמר בקובץ הפעיל");
-      return;
-    }
-    saveBlob(blob, `cropped-${image.name}`);
-    setStatus("החיתוך נשמר כעותק");
+    const fileName = await saveNewFileBlob(blob, croppedFileName(image.name), image.dirHandle);
+    setStatus(`החיתוך נשמר כקובץ חדש: ${fileName}`);
+    setCropMode(false);
   }, image.file.type || "image/png", .95);
+}
+
+function croppedFileName(name) {
+  return `${baseName(name)}-cropped${extensionOf(name)}`;
 }
 
 async function writeBlobToActiveFile(blob) {
@@ -872,12 +928,10 @@ function bindEvents() {
     els.installBtn.hidden = true;
   });
   els.cropModeBtn.addEventListener("click", () => {
-    state.cropMode = !state.cropMode;
-    document.body.classList.toggle("crop-active", state.cropMode);
-    els.cropModeBtn.textContent = state.cropMode ? "כבה חיתוך" : "הפעל חיתוך";
-    resetCrop();
+    setCropMode(!state.cropMode);
   });
-  els.saveCropBtn.addEventListener("click", saveCrop);
+  els.confirmCropBtn.addEventListener("click", saveCrop);
+  els.cancelCropBtn.addEventListener("click", () => setCropMode(false));
 
   els.stage.addEventListener("pointerdown", (event) => {
     if (!activeImage()) return;

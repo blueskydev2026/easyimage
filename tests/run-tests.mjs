@@ -39,6 +39,18 @@ if (!app.includes("event.deltaY > 0 ? 0.9 : 1.1")) {
 if (!app.includes('addEventListener("dragstart"')) {
   throw new Error("Native browser image dragging must be prevented");
 }
+if (!html.includes('id="confirmCropBtn"') || !html.includes('id="cancelCropBtn"')) {
+  throw new Error("Crop confirmation actions must be available on the image");
+}
+if (!app.includes("saveNewFileBlob(blob, croppedFileName(image.name), image.dirHandle)")) {
+  throw new Error("Crop save must create a new file instead of replacing the active image");
+}
+if (!app.includes("@page { size: A4 ${options.orientation}; margin: 7mm; }")) {
+  throw new Error("Print output must use a safe page margin to avoid clipped photos");
+}
+if (!app.includes("image.decode")) {
+  throw new Error("Print output must wait for images before printing");
+}
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));
 const sw = await readFile("sw.js", "utf8");

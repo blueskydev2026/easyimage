@@ -640,6 +640,31 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
 }
 
+.crop-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, .82);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .28);
+  backdrop-filter: blur(12px);
+  z-index: 4;
+}
+
+.crop-actions[hidden] {
+  display: none;
+}
+
+.crop-actions button {
+  min-height: 36px;
+}
+
 .crop-active .stage { cursor: crosshair; }
 
 .drop-hint {
