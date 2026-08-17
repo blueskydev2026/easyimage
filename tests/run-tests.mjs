@@ -54,6 +54,9 @@ if (!app.includes("@page { size: A4 ${options.orientation}; margin: 7mm; }")) {
 if (!app.includes("print-photo-frame") || !app.includes("object-fit: contain")) {
   throw new Error("Print photos must be constrained inside each cell without cropping or distortion");
 }
+if (!html.includes('id="printNoCrop"') || !app.includes("fit-no-crop")) {
+  throw new Error("Print dialog must include an explicit full-image no-crop mode");
+}
 if (!app.includes("image.decode")) {
   throw new Error("Print output must wait for images before printing");
 }

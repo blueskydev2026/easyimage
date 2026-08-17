@@ -523,6 +523,26 @@ input[type="range"]::-moz-range-thumb {
   accent-color: var(--accent);
 }
 
+.print-fit-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(45, 212, 191, .75);
+  border-radius: 8px;
+  background: rgba(45, 212, 191, .14);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.print-fit-toggle input {
+  width: auto;
+  min-height: 0;
+  accent-color: var(--accent);
+}
+
 .print-setting[hidden] {
   display: none;
 }
