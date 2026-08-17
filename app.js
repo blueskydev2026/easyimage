@@ -77,7 +77,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.7";
+const appVersion = "2.0.8";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -654,7 +654,9 @@ async function printWithOptions(options) {
     <main class="print-sheet">
       ${sheetItems.map((image) => `
         <figure class="print-cell">
-          <img src="${image.src}" alt="${escapeHtml(image.name)}">
+          <div class="print-photo-frame">
+            <img src="${image.src}" alt="${escapeHtml(image.name)}">
+          </div>
         </figure>
       `).join("")}
       ${Array.from({ length: gridCount - sheetItems.length }, () => "<figure class=\"print-cell empty\"></figure>").join("")}
@@ -680,9 +682,12 @@ async function printWithOptions(options) {
           .print-sheet {
             width: var(--page-width);
             height: var(--page-height);
+            padding: 1mm;
             display: grid;
             grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
             grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr));
+            gap: 1mm;
+            overflow: hidden;
             page-break-after: always;
             break-after: page;
           }
@@ -694,9 +699,18 @@ async function printWithOptions(options) {
             min-height: 0;
             display: grid;
             place-items: center;
-            overflow: hidden;
+            overflow: visible;
             page-break-inside: avoid;
             break-inside: avoid;
+          }
+          .print-photo-frame {
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            display: grid;
+            place-items: center;
+            overflow: visible;
           }
           .print-cell img {
             max-width: 100%;
