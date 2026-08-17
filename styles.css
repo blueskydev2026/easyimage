@@ -471,6 +471,8 @@ input[type="range"] {
 
 .preview-page {
   display: grid;
+  grid-template-columns: repeat(var(--preview-cols, 1), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--preview-rows, 1), minmax(0, 1fr));
   gap: 7px;
   width: 72%;
   aspect-ratio: 1 / 1.414;
@@ -483,23 +485,6 @@ input[type="range"] {
 .print-preview.landscape .preview-page {
   width: 92%;
   aspect-ratio: 1.414 / 1;
-}
-
-.preview-page.slots-1 {
-  grid-template-columns: 1fr;
-}
-
-.preview-page.slots-2 {
-  grid-template-columns: 1fr;
-}
-
-.preview-page.slots-4,
-.preview-page.slots-6 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.preview-page.slots-9 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .preview-slot {

@@ -511,6 +511,9 @@ function renderPrintPreview(options = state.print) {
 
   const page = document.createElement("div");
   page.className = `preview-page slots-${countForOptions(options)} custom-${options.customSize}`;
+  const layout = gridLayout(countForOptions(options), options.orientation);
+  page.style.setProperty("--preview-cols", layout.columns);
+  page.style.setProperty("--preview-rows", layout.rows);
   const items = printItemsForOptions(options).slice(0, countForOptions(options));
   items.forEach((item, index) => {
     const slot = document.createElement("div");
@@ -569,28 +572,57 @@ function openPrintOptions() {
   }
 }
 
-function printActive() {
-  printWithOptions(currentPrintOptions({ mode: "normal" }));
+async function printActive() {
+  await printWithOptions(currentPrintOptions({ mode: "normal" }));
 }
 
-function printAdvanced() {
+async function printAdvanced() {
   const options = readPrintOptions();
-  printWithOptions(options);
+  await printWithOptions(options);
 }
 
-function printWithOptions(options) {
+async function printSourceForImage(image) {
+  if (!image.rotation) return image.url;
+  try {
+    const canvas = await imageToCanvas(image);
+    return canvas.toDataURL(image.file.type || "image/png", .95);
+  } catch {
+    return image.url;
+  }
+}
+
+function chunkItems(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function printWithOptions(options) {
   const items = printItemsForOptions(options);
   if (!items.length) return;
   const printWindow = window.open("", "_blank", "popup,width=980,height=760");
   if (!printWindow) return setStatus("הדפדפן חסם את חלון ההדפסה");
   const title = options.mode === "multi" ? "הדפסת תמונות" : items[0].name;
-  const cells = items.map((image) => `
-    <figure class="print-cell">
-      <img src="${image.url}" alt="" style="--rotation:${image.rotation}deg">
-    </figure>
-  `).join("");
   const customStyle = options.mode === "custom" ? customSizeCss(options.customSize) : "";
   const gridCount = countForOptions(options);
+  const sources = [];
+  for (const image of items) {
+    sources.push({
+      src: await printSourceForImage(image),
+      name: image.name,
+    });
+  }
+  const sheets = chunkItems(sources, gridCount).map((sheetItems) => `
+    <main class="print-sheet">
+      ${sheetItems.map((image) => `
+        <figure class="print-cell">
+          <img src="${image.src}" alt="${escapeHtml(image.name)}">
+        </figure>
+      `).join("")}
+    </main>
+  `).join("");
 
   printWindow.document.write(`
     <!doctype html>
@@ -604,12 +636,14 @@ function printWithOptions(options) {
           body { font-family: Arial, sans-serif; }
           .print-sheet {
             width: 100vw;
-            min-height: 100vh;
+            height: 100vh;
             display: grid;
             grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
-            grid-auto-rows: calc(100vh / var(--rows, 1));
+            grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr));
+            page-break-after: always;
             break-after: page;
           }
+          .print-sheet:last-child { page-break-after: auto; break-after: auto; }
           .print-cell {
             margin: 0;
             padding: 0;
@@ -624,8 +658,7 @@ function printWithOptions(options) {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transform: rotate(var(--rotation, 0deg));
-            transform-origin: center;
+            display: block;
           }
           .mode-normal .print-sheet { --cols: 1; --rows: 1; height: 100vh; }
           .mode-normal .print-cell { width: 100vw; height: 100vh; }
@@ -638,8 +671,8 @@ function printWithOptions(options) {
           }
         </style>
       </head>
-      <body class="mode-${options.mode}" style="${gridStyle(gridCount)}">
-        <main class="print-sheet">${cells}</main>
+      <body class="mode-${options.mode}" style="${gridStyle(gridCount, options.orientation)}">
+        ${sheets}
       </body>
     </html>
   `);
@@ -651,9 +684,20 @@ function printWithOptions(options) {
   setStatus("נשלח לחלון ההדפסה. בחירת המדפסת בפועל מנוהלת על ידי הדפדפן.");
 }
 
-function gridStyle(count) {
-  const columns = count === 2 ? 1 : count === 6 ? 2 : Math.ceil(Math.sqrt(count));
+function gridLayout(count, orientation) {
+  if (count === 2) {
+    return orientation === "landscape" ? { columns: 2, rows: 1 } : { columns: 1, rows: 2 };
+  }
+  if (count === 6) {
+    return orientation === "landscape" ? { columns: 3, rows: 2 } : { columns: 2, rows: 3 };
+  }
+  const columns = Math.ceil(Math.sqrt(count));
   const rows = Math.ceil(count / columns);
+  return { columns, rows };
+}
+
+function gridStyle(count, orientation) {
+  const { columns, rows } = gridLayout(count, orientation);
   return `--grid-cols:${columns};--grid-rows:${rows};`;
 }
 
@@ -887,9 +931,11 @@ updatePanels();
 
 if ("serviceWorker" in navigator) {
   const serviceWorkerUrl = new URL("./sw.js", document.baseURI);
-  navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./" }).catch((error) => {
-    console.error("Service worker registration failed:", error);
-  });
+  navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./", updateViaCache: "none" })
+    .then((registration) => registration.update())
+    .catch((error) => {
+      console.error("Service worker registration failed:", error);
+    });
 }
 
 if ("launchQueue" in window) {
