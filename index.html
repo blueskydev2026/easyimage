@@ -58,6 +58,10 @@
             <canvas id="editCanvas" hidden></canvas>
             <div class="crop-box" id="cropBox" hidden></div>
             <div class="drop-hint" id="dropHint">שחררו כאן כדי לפתוח</div>
+            <label class="main-zoom-control" id="mainZoomControl" aria-label="זום">
+              <input id="zoomSlider" type="range" min="25" max="400" step="5" value="100">
+              <output id="zoomValue">100%</output>
+            </label>
           </div>
           <button class="nav-btn next" id="nextBtn" type="button" aria-label="תמונה הבאה">›</button>
         </section>
@@ -79,10 +83,6 @@
               <button id="fitBtn" type="button">התאם למסך</button>
               <button id="actualBtn" type="button">גודל מלא</button>
             </div>
-            <label class="field range-field">
-              <span>זום <output id="zoomValue">100%</output></span>
-              <input id="zoomSlider" type="range" min="25" max="400" step="5" value="100">
-            </label>
           </div>
 
           <div class="tool-group">

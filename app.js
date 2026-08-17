@@ -74,7 +74,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.2";
+const appVersion = "2.0.4";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -253,11 +253,29 @@ function fitImageToStage() {
 function resetPan() {
   state.panX = 0;
   state.panY = 0;
+  state.panStart = null;
+  state.panOrigin = null;
+}
+
+function panBounds() {
+  const image = activeImage();
+  if (!image || !els.mainImage.naturalWidth || !els.mainImage.naturalHeight) return { x: 0, y: 0 };
+  const stageRect = els.stage.getBoundingClientRect();
+  const fitWidth = Number.parseFloat(els.mainImage.style.getPropertyValue("--fit-width")) || 0;
+  const fitHeight = Number.parseFloat(els.mainImage.style.getPropertyValue("--fit-height")) || 0;
+  const rotated = image.rotation % 180 !== 0;
+  const displayWidth = (rotated ? fitHeight : fitWidth) * state.zoom;
+  const displayHeight = (rotated ? fitWidth : fitHeight) * state.zoom;
+  return {
+    x: Math.max(0, (displayWidth - stageRect.width) / 2),
+    y: Math.max(0, (displayHeight - stageRect.height) / 2),
+  };
 }
 
 function clampPan() {
-  state.panX = 0;
-  state.panY = 0;
+  const bounds = panBounds();
+  state.panX = Math.min(bounds.x, Math.max(-bounds.x, state.panX));
+  state.panY = Math.min(bounds.y, Math.max(-bounds.y, state.panY));
 }
 
 function selectImage(index) {
@@ -861,7 +879,15 @@ function bindEvents() {
 
   els.stage.addEventListener("pointerdown", (event) => {
     if (!activeImage()) return;
-    if (!state.cropMode) return;
+    if (!state.cropMode) {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      state.panStart = { x: event.clientX, y: event.clientY };
+      state.panOrigin = { x: state.panX, y: state.panY };
+      els.stage.setPointerCapture(event.pointerId);
+      document.body.classList.add("panning");
+      return;
+    }
     const point = cropPoint(event, true);
     if (!point) return;
     state.dragStart = point;
@@ -869,26 +895,36 @@ function bindEvents() {
     drawCrop(state.dragStart, state.dragStart);
   });
   els.stage.addEventListener("pointermove", (event) => {
+    if (state.panStart && state.panOrigin) {
+      state.panX = state.panOrigin.x + event.clientX - state.panStart.x;
+      state.panY = state.panOrigin.y + event.clientY - state.panStart.y;
+      clampPan();
+      applyZoomUi();
+      return;
+    }
     if (!state.dragStart) return;
     const point = cropPoint(event);
     if (point) drawCrop(state.dragStart, point);
   });
   els.stage.addEventListener("pointerup", () => {
     state.dragStart = null;
+    state.panStart = null;
+    state.panOrigin = null;
+    document.body.classList.remove("panning");
   });
   els.stage.addEventListener("pointercancel", () => {
     state.dragStart = null;
+    state.panStart = null;
+    state.panOrigin = null;
+    document.body.classList.remove("panning");
   });
   els.stage.addEventListener("wheel", (event) => {
     if (!activeImage()) return;
     event.preventDefault();
-    if (event.ctrlKey || event.metaKey) {
-      const direction = event.deltaY > 0 ? -1 : 1;
-      const factor = direction > 0 ? 1.1 : 0.9;
-      setZoom(state.zoom * factor);
-      return;
-    }
+    const factor = event.deltaY > 0 ? 0.9 : 1.1;
+    setZoom(state.zoom * factor);
   }, { passive: false });
+  els.mainImage.addEventListener("dragstart", (event) => event.preventDefault());
   els.mainImage.addEventListener("load", fitImageToStage);
   window.addEventListener("resize", () => {
     if (activeImage() && Math.abs(state.zoom - state.fitZoom) < 0.02) fitImageToStage();

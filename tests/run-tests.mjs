@@ -30,8 +30,14 @@ const app = await readFile("app.js", "utf8");
 for (const feature of ["showDirectoryPicker", "launchQueue", "ClipboardItem", "beforeinstallprompt"]) {
   if (!app.includes(feature)) throw new Error(`Missing expected feature: ${feature}`);
 }
-if (app.includes("panStart") || app.includes("panOrigin")) {
-  throw new Error("Image drag-to-pan should stay disabled");
+if (!app.includes("panOrigin") || !app.includes("document.body.classList.add(\"panning\")")) {
+  throw new Error("Image drag-to-pan should be enabled");
+}
+if (!app.includes("event.deltaY > 0 ? 0.9 : 1.1")) {
+  throw new Error("Mouse wheel should zoom the image");
+}
+if (!app.includes('addEventListener("dragstart"')) {
+  throw new Error("Native browser image dragging must be prevented");
 }
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));

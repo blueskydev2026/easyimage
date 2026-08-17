@@ -204,6 +204,7 @@ h1 {
     linear-gradient(-45deg, rgba(255,255,255,.035) 25%, transparent 25%),
     #0b1020;
   background-size: 28px 28px;
+  touch-action: none;
 }
 
 #mainImage {
@@ -217,9 +218,59 @@ h1 {
   transform-origin: center center;
   transition: transform .18s ease;
   user-select: none;
+  -webkit-user-drag: none;
+  cursor: grab;
+}
+
+.panning #mainImage {
+  cursor: grabbing;
+  transition: none;
 }
 
 .stage.has-image #mainImage { display: block; }
+
+.main-zoom-control {
+  position: absolute;
+  left: 50%;
+  inset-block-end: 16px;
+  transform: translateX(-50%);
+  width: min(46vw, 260px);
+  min-width: 170px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, .52);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+  opacity: .78;
+  transition: opacity .16s ease, border-color .16s ease;
+  z-index: 3;
+}
+
+.main-zoom-control:hover,
+.main-zoom-control:focus-within {
+  opacity: 1;
+  border-color: rgba(45, 212, 191, .34);
+}
+
+.stage.has-image .main-zoom-control {
+  display: flex;
+}
+
+.main-zoom-control input {
+  min-height: 20px;
+}
+
+.main-zoom-control output {
+  min-width: 38px;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+  text-align: start;
+}
 
 .empty-state {
   max-width: 620px;
@@ -335,8 +386,33 @@ select {
 }
 
 input[type="range"] {
-  accent-color: var(--accent);
+  accent-color: rgba(45, 212, 191, .72);
+  height: 20px;
   padding: 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(166, 176, 195, .32);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(166, 176, 195, .32);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
 }
 
 .range-field span {
@@ -347,8 +423,9 @@ input[type="range"] {
 }
 
 .range-field output {
-  color: var(--ink);
-  font-weight: 800;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: .86rem;
 }
 
 .status-row {
@@ -606,6 +683,10 @@ input[type="range"] {
     grid-template-rows: minmax(0, 1fr);
   }
   .viewer { grid-row: 1; grid-template-columns: 44px minmax(0, 1fr) 44px; }
+  .main-zoom-control {
+    width: min(62vw, 260px);
+    inset-block-end: 12px;
+  }
   .filmstrip {
     inset-block-start: 118px;
     width: min(88vw, 360px);
