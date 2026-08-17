@@ -47,6 +47,7 @@ const els = {
   actualBtn: document.querySelector("#actualBtn"),
   zoomSlider: document.querySelector("#zoomSlider"),
   zoomValue: document.querySelector("#zoomValue"),
+  mainZoomControl: document.querySelector("#mainZoomControl"),
   cropModeBtn: document.querySelector("#cropModeBtn"),
   saveCropBtn: document.querySelector("#saveCropBtn"),
   renameInput: document.querySelector("#renameInput"),
@@ -74,7 +75,7 @@ const els = {
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"]);
 let deferredInstallPrompt = null;
-const appVersion = "2.0.4";
+const appVersion = "2.0.5";
 const minZoom = 0.25;
 const maxZoom = 4;
 
@@ -201,6 +202,7 @@ function setToolDisabled(disabled) {
     els.quickPrintBtn, els.printOptionsBtn, els.sidePrintOptionsBtn, els.batchRenameBtn,
   ].forEach((button) => { button.disabled = disabled; });
   els.zoomSlider.disabled = disabled;
+  els.mainZoomControl.hidden = disabled;
 }
 
 function setZoom(value) {

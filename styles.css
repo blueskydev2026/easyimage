@@ -230,24 +230,17 @@ h1 {
 .stage.has-image #mainImage { display: block; }
 
 .main-zoom-control {
-  position: absolute;
-  left: 50%;
-  inset-block-end: 16px;
-  transform: translateX(-50%);
-  width: min(46vw, 260px);
-  min-width: 170px;
+  width: clamp(150px, 18vw, 230px);
   display: none;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  min-height: 42px;
+  padding: 0 10px;
   border: 1px solid rgba(255, 255, 255, .1);
   border-radius: 8px;
-  background: rgba(15, 23, 42, .52);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+  background: rgba(255, 255, 255, .06);
   opacity: .78;
   transition: opacity .16s ease, border-color .16s ease;
-  z-index: 3;
 }
 
 .main-zoom-control:hover,
@@ -256,7 +249,7 @@ h1 {
   border-color: rgba(45, 212, 191, .34);
 }
 
-.stage.has-image .main-zoom-control {
+.main-zoom-control:not([hidden]) {
   display: flex;
 }
 
@@ -684,8 +677,9 @@ input[type="range"]::-moz-range-thumb {
   }
   .viewer { grid-row: 1; grid-template-columns: 44px minmax(0, 1fr) 44px; }
   .main-zoom-control {
-    width: min(62vw, 260px);
-    inset-block-end: 12px;
+    flex: 1 1 190px;
+    order: 2;
+    width: auto;
   }
   .filmstrip {
     inset-block-start: 118px;
